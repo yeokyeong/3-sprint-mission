@@ -22,7 +22,9 @@ public enum ErrorCode {
     // User 관련 오류 (4xx)
     USER_NOT_FOUND(404, "USER_001", "사용자를 찾을 수 없습니다"),
     DUPLICATE_EMAIL_NAME(400, "USER_002", "해당하는 이메일/이름을 가진 유저가 이미 존재합니다."),
-    INVALID_CREDENTIALS(400, "USER_003", "비밀번호 또는 사용자 정보가 올바르지 않습니다."),
+    INVALID_CREDENTIALS(401, "INVALID_CREDENTIALS", "비밀번호 또는 사용자 정보가 올바르지 않습니다."),
+    ACCOUNT_DISABLED(401, "ACCOUNT_DISABLED", "비활성화된 계정입니다."),
+    AUTHENTICATION_ERROR(401, "AUTHENTICATION_ERROR", "로그인에 실패했습니다."),
 
     // UserStatus 관련 오류 (4xx)
     DUPLICATE_USERSTATUS(400, "USERSTATUS_001", "해당하는 유저상태가 이미 존재합니다."),
