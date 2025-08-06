@@ -15,18 +15,18 @@ import java.util.UUID;
 //Q. Service 레이어에서 return을 DTO로 해야하나 Entity로 해야하나?
 public interface UserService {
 
-  public UserDto create(UserCreateRequest userCreateRequest,
-      Optional<BinaryContentCreateRequest> profileCreateRequest);
+    public UserDto create(UserCreateRequest userCreateRequest,
+        Optional<BinaryContentCreateRequest> profileCreateRequest);
 
-  public UserDto find(UUID userId);
+    public UserDto find(UUID userId);
 
-  public List<UserDto> find(String name);
+    public List<UserDto> find(String name);
 
-  public List<UserDto> findAll();
+    public List<UserDto> findAll();
 
-  public UserDto update(UUID userId, UserUpdateRequest updateRequest,
-      Optional<BinaryContentCreateRequest> profileCreateRequest);
+    public UserDto update(UUID userId, UserUpdateRequest updateRequest,
+        Optional<BinaryContentCreateRequest> profileCreateRequest);
 
-  public void delete(UUID userId);
+    public void delete(UUID userId);
 
 }

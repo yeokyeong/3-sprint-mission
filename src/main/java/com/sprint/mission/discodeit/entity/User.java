@@ -26,46 +26,47 @@ import lombok.ToString;
 @Table(name = "users")
 public class User extends BaseUpdatableEntity {
 
-  @Column(name = "username", nullable = false, unique = true)
-  private String username;
+    @Column(name = "username", nullable = false, unique = true)
+    private String username;
 
-  @Column(name = "email", nullable = false, unique = true)
-  private String email;
+    @Column(name = "email", nullable = false, unique = true)
+    private String email;
 
-  @Column(name = "password", nullable = false)
-  private String password;
+    @Column(name = "password", nullable = false)
+    private String password;
 
-  // 유저 삭제될때 profile 삭제
-  @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-  @JoinColumn(name = "profile_id")
-  private BinaryContent profile;
+    // 유저 삭제될때 profile 삭제
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JoinColumn(name = "profile_id")
+    private BinaryContent profile;
 
-  @JsonManagedReference
-  @Setter(AccessLevel.PROTECTED)
-  @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-  private UserStatus status;
+    //FIXME: JsonManagedReference 필요한지 확인
+    @JsonManagedReference
+    @Setter(AccessLevel.PROTECTED)
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private UserStatus status;
 
-  public User(String username, String email, String password, BinaryContent profile) {
-    this.username = username;
-    this.email = email;
-    this.password = password;
-    this.profile = profile;
-  }
-
-  public void update(String newUsername, String newEmail, String newPassword,
-      BinaryContent newProfile) {
-    if (newUsername != null && !newUsername.equals(this.username)) {
-      this.username = newUsername;
+    public User(String username, String email, String password, BinaryContent profile) {
+        this.username = username;
+        this.email = email;
+        this.password = password;
+        this.profile = profile;
     }
-    if (newEmail != null && !newEmail.equals(this.email)) {
-      this.email = newEmail;
+
+    public void update(String newUsername, String newEmail, String newPassword,
+        BinaryContent newProfile) {
+        if (newUsername != null && !newUsername.equals(this.username)) {
+            this.username = newUsername;
+        }
+        if (newEmail != null && !newEmail.equals(this.email)) {
+            this.email = newEmail;
+        }
+        if (newPassword != null && !newPassword.equals(this.password)) {
+            this.password = newPassword;
+        }
+        if (newProfile != null) {
+            this.profile = newProfile;
+        }
     }
-    if (newPassword != null && !newPassword.equals(this.password)) {
-      this.password = newPassword;
-    }
-    if (newProfile != null) {
-      this.profile = newProfile;
-    }
-  }
 
 }

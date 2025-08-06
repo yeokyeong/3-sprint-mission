@@ -17,19 +17,19 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class BasicAuthService implements AuthService {
 
-  private final UserRepository userRepository;
-  private final UserMapper userMapper;
+    private final UserRepository userRepository;
+    private final UserMapper userMapper;
 
-  @Transactional
-  @Override
-  public UserDto login(LoginRequest loginRequest) {
-    User user = this.userRepository.findByUsername(loginRequest.username()).orElseThrow(
-        () -> new UserNotFoundException(loginRequest.username()));
+    @Transactional
+    @Override
+    public UserDto login(LoginRequest loginRequest) {
+        User user = this.userRepository.findByUsername(loginRequest.username()).orElseThrow(
+            () -> new UserNotFoundException(loginRequest.username()));
 
-    if (!user.getPassword().equals(loginRequest.password())) {
-      throw new InvalidCredentialsException(loginRequest.username(), loginRequest.password());
+        if (!user.getPassword().equals(loginRequest.password())) {
+            throw new InvalidCredentialsException(loginRequest.username(), loginRequest.password());
+        }
+
+        return userMapper.toDto(user);
     }
-
-    return userMapper.toDto(user);
-  }
 }

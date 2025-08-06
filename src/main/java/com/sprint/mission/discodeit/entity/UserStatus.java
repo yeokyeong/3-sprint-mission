@@ -26,37 +26,37 @@ import lombok.ToString;
 @Table(name = "user_statuses")
 public class UserStatus extends BaseUpdatableEntity {
 
-  @JsonBackReference
-  @OneToOne(fetch = FetchType.LAZY, optional = false)
-  @JoinColumn(name = "user_id", nullable = false, unique = true)
-  private User user;
+    @JsonBackReference
+    @OneToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", nullable = false, unique = true)
+    private User user;
 
-  @Column(name = "last_active_at", nullable = false)
-  private Instant lastActiveAt;
+    @Column(name = "last_active_at", nullable = false)
+    private Instant lastActiveAt;
 
-  /* XXX: status는 DB에 없음 */
-  @Transient
-  private UserStatusType status;
+    /* XXX: status는 DB에 없음 */
+    @Transient
+    private UserStatusType status;
 
-  public UserStatus(User user, Instant lastActiveAt) {
-    this.status = UserStatusType.ONLINE;
-    this.lastActiveAt = lastActiveAt;
-    //
-    this.user = user;
-    // user 엔티티에도 연관관계 추가(userStatus가 FK를 가지고 있으므로 관계 설정도 이곳에서 함)
-    user.setStatus(this);
-  }
-
-  public void update(Instant lastActiveAt) {
-    if (lastActiveAt != null && !lastActiveAt.equals(this.lastActiveAt)) {
-      this.lastActiveAt = lastActiveAt;
+    public UserStatus(User user, Instant lastActiveAt) {
+        this.status = UserStatusType.ONLINE;
+        this.lastActiveAt = lastActiveAt;
+        //
+        this.user = user;
+        // user 엔티티에도 연관관계 추가(userStatus가 FK를 가지고 있으므로 관계 설정도 이곳에서 함)
+        user.setStatus(this);
     }
-  }
 
-  public boolean isOnline() {
-    Instant instantFiveMinutesAgo = Instant.now().minus(Duration.ofMinutes(5));
+    public void update(Instant lastActiveAt) {
+        if (lastActiveAt != null && !lastActiveAt.equals(this.lastActiveAt)) {
+            this.lastActiveAt = lastActiveAt;
+        }
+    }
 
-    return lastActiveAt.isAfter(instantFiveMinutesAgo);
-  }
+    public boolean isOnline() {
+        Instant instantFiveMinutesAgo = Instant.now().minus(Duration.ofMinutes(5));
+
+        return lastActiveAt.isAfter(instantFiveMinutesAgo);
+    }
 
 }

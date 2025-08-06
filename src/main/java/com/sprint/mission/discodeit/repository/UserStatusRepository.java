@@ -8,10 +8,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface UserStatusRepository extends JpaRepository<UserStatus, UUID> {
 
-  @EntityGraph(attributePaths = {"user"})
-  public Optional<UserStatus> findByUserId(UUID userId);
+    @EntityGraph(attributePaths = {"user"})
+    public Optional<UserStatus> findByUserId(UUID userId);
 
-  public void deleteByUserId(UUID userId);
+    public void deleteByUserId(UUID userId);
 
 //    /* CrudRepository의 기본 메소드 */
 //    public UserStatus save(UserStatus userStatus);

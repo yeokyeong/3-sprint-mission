@@ -10,20 +10,20 @@ import org.springframework.data.jpa.repository.Query;
 
 public interface UserRepository extends JpaRepository<User, UUID> {
 
-  @Query("SELECT u FROM User u LEFT JOIN FETCH u.profile LEFT JOIN FETCH u.status")
-  List<User> findAllWithProfileAndStatus();
+    @Query("SELECT u FROM User u LEFT JOIN FETCH u.profile LEFT JOIN FETCH u.status")
+    List<User> findAllWithProfileAndStatus();
 
-  @EntityGraph(attributePaths = {"profile"})
-  Optional<User> findByUsername(String username);
+    @EntityGraph(attributePaths = {"profile"})
+    Optional<User> findByUsername(String username);
 
-  @EntityGraph(attributePaths = {"profile"})
-  Optional<User> findByEmail(String userEmail);
+    @EntityGraph(attributePaths = {"profile"})
+    Optional<User> findByEmail(String userEmail);
 
-  boolean existsByEmail(String email);
+    boolean existsByEmail(String email);
 
-  boolean existsByUsername(String username);
+    boolean existsByUsername(String username);
 
-  boolean existsByUsernameOrEmail(String username, String userEmail);
+    boolean existsByUsernameOrEmail(String username, String userEmail);
 
 //  /* CrudRepository의 기본 메소드 */
 //  public User save(User user);

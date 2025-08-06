@@ -35,72 +35,72 @@ import org.springframework.web.multipart.MultipartFile;
 @RequestMapping("/api/users")
 public class UserController implements UserApi {
 
-  private final UserService userService;
-  private final UserStatusService userStatusService;
+    private final UserService userService;
+    private final UserStatusService userStatusService;
 
-  /* 유저 생성 */
-  @PostMapping(consumes = {
-      MediaType.MULTIPART_FORM_DATA_VALUE})
-  @Override
-  public ResponseEntity<UserDto> create(
-      @RequestPart("userCreateRequest") UserCreateRequest userCreateRequest,
-      @RequestPart(value = "profile", required = false) MultipartFile profile
-  ) {
-    Optional<BinaryContentCreateRequest> profileRequest = Optional.ofNullable(profile)
-        .flatMap(BinaryContentConverter::resolveProfileRequest);
-    UserDto createdUserDto = userService.create(userCreateRequest, profileRequest);
-    return ResponseEntity.status(HttpStatus.CREATED).body(createdUserDto);
-  }
+    /* 유저 생성 */
+    @PostMapping(consumes = {
+        MediaType.MULTIPART_FORM_DATA_VALUE})
+    @Override
+    public ResponseEntity<UserDto> create(
+        @RequestPart("userCreateRequest") UserCreateRequest userCreateRequest,
+        @RequestPart(value = "profile", required = false) MultipartFile profile
+    ) {
+        Optional<BinaryContentCreateRequest> profileRequest = Optional.ofNullable(profile)
+            .flatMap(BinaryContentConverter::resolveProfileRequest);
+        UserDto createdUserDto = userService.create(userCreateRequest, profileRequest);
+        return ResponseEntity.status(HttpStatus.OK).body(createdUserDto);
+    }
 
-  /* 유저 수정 */
-  @PatchMapping(path = "/{userId}", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
-  @Override
-  public ResponseEntity<UserDto> update(
-      @PathVariable("userId") UUID userId,
-      @RequestPart("userUpdateRequest") UserUpdateRequest updateRequest,
-      @RequestPart(value = "profile", required = false) MultipartFile profile
-  ) {
+    /* 유저 수정 */
+    @PatchMapping(path = "/{userId}", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
+    @Override
+    public ResponseEntity<UserDto> update(
+        @PathVariable("userId") UUID userId,
+        @RequestPart("userUpdateRequest") UserUpdateRequest updateRequest,
+        @RequestPart(value = "profile", required = false) MultipartFile profile
+    ) {
 
-    Optional<BinaryContentCreateRequest> profileRequest = Optional.ofNullable(profile)
-        .flatMap(BinaryContentConverter::resolveProfileRequest);
-    UserDto updatedUserDto = userService.update(userId, updateRequest,
-        profileRequest);
+        Optional<BinaryContentCreateRequest> profileRequest = Optional.ofNullable(profile)
+            .flatMap(BinaryContentConverter::resolveProfileRequest);
+        UserDto updatedUserDto = userService.update(userId, updateRequest,
+            profileRequest);
 
-    return ResponseEntity.status(HttpStatus.OK).body(updatedUserDto);
-  }
+        return ResponseEntity.status(HttpStatus.OK).body(updatedUserDto);
+    }
 
-  /* 유저 삭제 */
-  @DeleteMapping(path = "/{userId}")
-  @Override
-  public ResponseEntity<Void> delete(
-      @PathVariable("userId") UUID userId
-  ) {
-    userService.delete(userId);
+    /* 유저 삭제 */
+    @DeleteMapping(path = "/{userId}")
+    @Override
+    public ResponseEntity<Void> delete(
+        @PathVariable("userId") UUID userId
+    ) {
+        userService.delete(userId);
 
-    return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
-  }
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
 
-  /* 유저 조회 All */
-  @GetMapping
-  @Override
-  public ResponseEntity<List<UserDto>> findAll() {
-    List<UserDto> users = userService.findAll();
+    /* 유저 조회 All */
+    @GetMapping
+    @Override
+    public ResponseEntity<List<UserDto>> findAll() {
+        List<UserDto> users = userService.findAll();
 
-    return ResponseEntity
-        .status(HttpStatus.OK)
-        .body(users);
-  }
+        return ResponseEntity
+            .status(HttpStatus.OK)
+            .body(users);
+    }
 
-  /* 유저 상태 업데이트 */
-  @PatchMapping(path = "/{userId}/userStatus")
-  @Override
-  public ResponseEntity<UserStatusDto> updateUserStatusByUserId(
-      @PathVariable("userId") UUID userId,
-      @RequestBody UserStatusUpdateRequest userUpdateRequest
-  ) {
-    UserStatusDto userStatusDto = userStatusService.updateByUserId(userId,
-        userUpdateRequest);
-    return ResponseEntity.status(HttpStatus.OK).body(userStatusDto);
-  }
+    /* 유저 상태 업데이트 */
+    @PatchMapping(path = "/{userId}/userStatus")
+    @Override
+    public ResponseEntity<UserStatusDto> updateUserStatusByUserId(
+        @PathVariable("userId") UUID userId,
+        @RequestBody UserStatusUpdateRequest userUpdateRequest
+    ) {
+        UserStatusDto userStatusDto = userStatusService.updateByUserId(userId,
+            userUpdateRequest);
+        return ResponseEntity.status(HttpStatus.OK).body(userStatusDto);
+    }
 
 }

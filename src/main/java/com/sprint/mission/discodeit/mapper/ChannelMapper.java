@@ -18,35 +18,35 @@ import org.springframework.beans.factory.annotation.Autowired;
     MessageMapper.class})
 public abstract class ChannelMapper {
 
-  //Q. mapper가 이렇게 주입받아서 많은 책임을 가져도 되나?
-  @Autowired
-  private MessageRepository messageRepository;
-  @Autowired
-  private ReadStatusRepository readStatusRepository;
-  @Autowired
-  private UserMapper userMapper;
+    //Q. mapper가 이렇게 주입받아서 많은 책임을 가져도 되나?
+    @Autowired
+    private MessageRepository messageRepository;
+    @Autowired
+    private ReadStatusRepository readStatusRepository;
+    @Autowired
+    private UserMapper userMapper;
 
-  @Mapping(target = "participants", source = "channel", qualifiedByName = "getParticipants")
-  @Mapping(target = "lastMessageAt", source = "channel", qualifiedByName = "getLastMessageAt")
-  public abstract ChannelDto toDto(Channel channel);
+    @Mapping(target = "participants", source = "channel", qualifiedByName = "getParticipants")
+    @Mapping(target = "lastMessageAt", source = "channel", qualifiedByName = "getLastMessageAt")
+    public abstract ChannelDto toDto(Channel channel);
 
-  public abstract Channel toEntity(ChannelDto channelDto);
+    public abstract Channel toEntity(ChannelDto channelDto);
 
 
-  @Named("getParticipants")
-  public List<UserDto> getParticipants(Channel channel) {
-    List<UserDto> participants = new ArrayList<>();
-    this.readStatusRepository.findAllByChannelIdWithUser(channel.getId())
-        .stream()
-        .map(ReadStatus::getUser)
-        .map(userMapper::toDto).forEach(participants::add);
+    @Named("getParticipants")
+    public List<UserDto> getParticipants(Channel channel) {
+        List<UserDto> participants = new ArrayList<>();
+        this.readStatusRepository.findAllByChannelIdWithUser(channel.getId())
+            .stream()
+            .map(ReadStatus::getUser)
+            .map(userMapper::toDto).forEach(participants::add);
 
-    return participants;
-  }
+        return participants;
+    }
 
-  @Named("getLastMessageAt")
-  public Instant getLastMessageAt(Channel channel) {
-    return this.messageRepository.findLastMessageAtByChannelId(channel.getId())
-        .orElse(Instant.MIN);
-  }
+    @Named("getLastMessageAt")
+    public Instant getLastMessageAt(Channel channel) {
+        return this.messageRepository.findLastMessageAtByChannelId(channel.getId())
+            .orElse(Instant.MIN);
+    }
 }

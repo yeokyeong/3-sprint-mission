@@ -23,74 +23,74 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class BasicUserStatusService implements UserStatusService {
 
-  private final UserStatusRepository userStatusRepository;
-  private final UserRepository userRepository;
-  private final UserStatusMapper userStatusMapper;
+    private final UserStatusRepository userStatusRepository;
+    private final UserRepository userRepository;
+    private final UserStatusMapper userStatusMapper;
 
-  @Transactional
-  @Override
-  public UserStatusDto create(UserStatusCreateRequest createRequest) {
-    //1.  `User`가 존재하지 않으면 예외 발생
-    User user = this.userRepository.findById(createRequest.userId()).orElseThrow(
-        () -> new ResourceNotFoundException("UserId = " + createRequest.userId()));
-    //2.  같은 `User`와 관련된 객체가 이미 존재하면 예외를 발생
-    this.userStatusRepository.findById(createRequest.userId()).ifPresent((userStatus) -> {
-      throw new UserStatusAlreadyExistsException(userStatus);
-    });
-    // 3. ReadStatus 생성
-    UserStatus userStatus = new UserStatus(user, Instant.now());
-    //4. DB저장
-    this.userStatusRepository.save(userStatus);
+    @Transactional
+    @Override
+    public UserStatusDto create(UserStatusCreateRequest createRequest) {
+        //1.  `User`가 존재하지 않으면 예외 발생
+        User user = this.userRepository.findById(createRequest.userId()).orElseThrow(
+            () -> new ResourceNotFoundException("UserId = " + createRequest.userId()));
+        //2.  같은 `User`와 관련된 객체가 이미 존재하면 예외를 발생
+        this.userStatusRepository.findById(createRequest.userId()).ifPresent((userStatus) -> {
+            throw new UserStatusAlreadyExistsException(userStatus);
+        });
+        // 3. ReadStatus 생성
+        UserStatus userStatus = new UserStatus(user, Instant.now());
+        //4. DB저장
+        this.userStatusRepository.save(userStatus);
 
-    return userStatusMapper.toDto(userStatus);
-  }
-
-  @Override
-  public UserStatusDto find(UUID userStatusId) {
-    return this.userStatusRepository
-        .findById(userStatusId)
-        .map(userStatusMapper::toDto)
-        .orElseThrow(
-            () -> new ResourceNotFoundException("userStatusId = " + userStatusId));
-  }
-
-  @Override
-  public List<UserStatusDto> findAll() {
-
-    return this.userStatusRepository.findAll().stream()
-        .map(userStatusMapper::toDto).toList();
-  }
-
-  @Transactional
-  @Override
-  public UserStatusDto update(UUID userStatusId, UserStatusUpdateRequest updateRequest) {
-    UserStatus userStatus = this.userStatusRepository
-        .findById(userStatusId)
-        .orElseThrow(
-            () -> new ResourceNotFoundException("userStatusId = " + userStatusId));
-    userStatus.update(updateRequest.newLastActiveAt());
-
-    return userStatusMapper.toDto(userStatus);
-  }
-
-  @Transactional
-  @Override
-  public UserStatusDto updateByUserId(UUID userId, UserStatusUpdateRequest updateRequest) {
-    UserStatus userStatus = this.userStatusRepository
-        .findByUserId(userId)
-        .orElseThrow(
-            () -> new ResourceNotFoundException("userId = " + userId));
-    userStatus.update(updateRequest.newLastActiveAt());
-
-    return userStatusMapper.toDto(userStatus);
-  }
-
-  @Transactional
-  @Override
-  public void delete(UUID userStatusId) {
-    if (!this.userStatusRepository.existsById(userStatusId)) {
-      throw new ResourceNotFoundException("userStatusId = " + userStatusId);
+        return userStatusMapper.toDto(userStatus);
     }
-    this.userStatusRepository.deleteById(userStatusId);
-  }
+
+    @Override
+    public UserStatusDto find(UUID userStatusId) {
+        return this.userStatusRepository
+            .findById(userStatusId)
+            .map(userStatusMapper::toDto)
+            .orElseThrow(
+                () -> new ResourceNotFoundException("userStatusId = " + userStatusId));
+    }
+
+    @Override
+    public List<UserStatusDto> findAll() {
+
+        return this.userStatusRepository.findAll().stream()
+            .map(userStatusMapper::toDto).toList();
+    }
+
+    @Transactional
+    @Override
+    public UserStatusDto update(UUID userStatusId, UserStatusUpdateRequest updateRequest) {
+        UserStatus userStatus = this.userStatusRepository
+            .findById(userStatusId)
+            .orElseThrow(
+                () -> new ResourceNotFoundException("userStatusId = " + userStatusId));
+        userStatus.update(updateRequest.newLastActiveAt());
+
+        return userStatusMapper.toDto(userStatus);
+    }
+
+    @Transactional
+    @Override
+    public UserStatusDto updateByUserId(UUID userId, UserStatusUpdateRequest updateRequest) {
+        UserStatus userStatus = this.userStatusRepository
+            .findByUserId(userId)
+            .orElseThrow(
+                () -> new ResourceNotFoundException("userId = " + userId));
+        userStatus.update(updateRequest.newLastActiveAt());
+
+        return userStatusMapper.toDto(userStatus);
+    }
+
+    @Transactional
+    @Override
+    public void delete(UUID userStatusId) {
+        if (!this.userStatusRepository.existsById(userStatusId)) {
+            throw new ResourceNotFoundException("userStatusId = " + userStatusId);
+        }
+        this.userStatusRepository.deleteById(userStatusId);
+    }
 }
