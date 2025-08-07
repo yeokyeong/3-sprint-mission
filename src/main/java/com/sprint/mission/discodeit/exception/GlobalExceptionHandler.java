@@ -8,10 +8,15 @@ import com.sprint.mission.discodeit.exception.ReadStatus.ReadStatusException;
 import com.sprint.mission.discodeit.exception.User.UserException;
 import com.sprint.mission.discodeit.exception.UserStatus.UserStatusException;
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authorization.AuthorizationDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -147,6 +152,29 @@ public class GlobalExceptionHandler extends RuntimeException {
                 e.getMessage(), null,
                 e.getClass().getTypeName(),
                 ErrorCode.INVALID_REQUEST_PARAMS.getHttpStatus()
+            )
+        );
+    }
+
+    @ExceptionHandler(AuthorizationDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAuthorizationDeniedException(
+        AuthorizationDeniedException e) {
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication != null ? authentication.getName() : "anonymous";
+        List<String> roles = authentication != null
+            ? authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList()
+            : List.of();
+
+        log.error("▶▶▶▶권한없는 요청 : 사용자={}, 권한={}, 사유={}", username,
+            roles, e.getMessage());
+
+        return ResponseEntity.status(ErrorCode.ACCESS_DENIED.getHttpStatus()).body(
+            new ErrorResponse(
+                Instant.now(), ErrorCode.ACCESS_DENIED.getCode(),
+                e.getMessage(), null,
+                e.getClass().getTypeName(),
+                ErrorCode.ACCESS_DENIED.getHttpStatus()
             )
         );
     }

@@ -1,5 +1,7 @@
 package com.sprint.mission.discodeit.config;
 
+import com.sprint.mission.discodeit.handler.AuthenticationEntryPointHandler;
+import com.sprint.mission.discodeit.handler.CustomAccessDeniedHandler;
 import com.sprint.mission.discodeit.handler.LoginFailureHandler;
 import com.sprint.mission.discodeit.handler.LoginSuccessHandler;
 import java.util.List;
@@ -15,6 +17,7 @@ import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -31,7 +34,9 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http,
         LoginSuccessHandler loginSuccessHandler,
-        LoginFailureHandler loginFailureHandler) throws Exception {
+        LoginFailureHandler loginFailureHandler,
+        AuthenticationEntryPointHandler authenticationEntryPointHandler,
+        CustomAccessDeniedHandler customAccessDeniedHandler) throws Exception {
         System.out.println("[SecurityConfig] FilterChain 구성 시작");
         http
             // CSRF 설정 - 쿠키기반
@@ -41,17 +46,26 @@ public class SecurityConfig {
             )
             // 요청 권한 설정
             .authorizeHttpRequests(auth -> auth
-                // 인증 제외
-                .requestMatchers("/").permitAll()
-                .requestMatchers("/swagger-ui/**", "/api-docs/**").permitAll()
-                .requestMatchers("/actuator/**").permitAll()
-                .requestMatchers("/api/auth/csrf-token").permitAll()
-                .requestMatchers("/api/auth/login").permitAll()
-                // 그 외 모든 API는 인증 필요
-                // .requestMatchers("/api/**").authenticated()
+                    // 인증 제외
+                    .requestMatchers(
+                        "/",
+                        "/api/auth/login",
+                        "/api/auth/logout",
+                        "/api/auth/csrf-token",
+                        "/api/users",
 
-                // 그 외 모든 요청은 허용
-                .anyRequest().permitAll()
+                        "/swagger-ui/**",
+                        "/v3/api-docs/**"
+
+//                        "/index.html",
+//                        "/favicon.ico",
+//                        "/index-*.js",
+//                        "/index-*.css",
+//                        "/assets/**",
+                    ).permitAll()
+                    // 그 외 모든 API는 인증 필요
+                    .anyRequest().authenticated()
+
             )
             // Form 기반 로그인 설정
             .formLogin(form -> form
@@ -66,9 +80,31 @@ public class SecurityConfig {
                 .permitAll()
             )
             // HTTP Basic 인증 비활성화
-            .httpBasic(basic -> basic.disable());
+            .httpBasic(basic -> basic.disable())
+            .exceptionHandling(configurer -> configurer
+                // 로그인되지않는 사용자가 요청할 때
+                .authenticationEntryPoint(authenticationEntryPointHandler)
+                // 로그인은 했지만 권한이 없는 사용자가 요청할 때
+                .accessDeniedHandler(customAccessDeniedHandler)
+            );
 
         return http.build();
+    }
+
+    /* 정적 리소스는 필터 체인에서 아예 제외 */
+    @Bean
+    WebSecurityCustomizer webSecurityCustomizer() {
+
+        return (web -> web.ignoring()
+            .requestMatchers("/favicon.ico")
+            // 정적 리소스 (CSS, JavaScript, 이미지 등)
+            .requestMatchers(
+                "/static/**",
+                "/assets/**",
+                "/index.html",
+                "/index-*.js",
+                "/index-*.css"
+            ));
     }
 
 
@@ -101,8 +137,10 @@ public class SecurityConfig {
     /*Role Hierarchy 설정. ADMIN 권한은 USER의 모든 권한을 포함*/
     @Bean
     public RoleHierarchy roleHierarchy() {
-        RoleHierarchy hierarchy = RoleHierarchyImpl.fromHierarchy("ROLE_ADMIN > ROLE_USER");
-        System.out.println("[SecurityConfig] RoleHierarchy 설정 완료: ROLE_ADMIN > ROLE_USER");
+        RoleHierarchy hierarchy = RoleHierarchyImpl.fromHierarchy(
+            "ROLE_ADMIN > ROLE_CHANNEL_MANAGER > ROLE_USER");
+        System.out.println(
+            "[SecurityConfig] RoleHierarchy 설정 완료: ROLE_ADMIN > ROLE_CHANNEL_MANAGER > ROLE_USER");
 
         return hierarchy;
     }
