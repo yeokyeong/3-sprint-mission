@@ -4,21 +4,28 @@ import com.sprint.mission.discodeit.handler.LoginFailureHandler;
 import com.sprint.mission.discodeit.handler.LoginSuccessHandler;
 import java.util.List;
 import java.util.stream.IntStream;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
+import org.springframework.security.access.expression.method.MethodSecurityExpressionHandler;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
+@Slf4j
 public class SecurityConfig {
 
     @Bean
@@ -51,6 +58,11 @@ public class SecurityConfig {
                 .loginProcessingUrl("/api/auth/login")
                 .successHandler(loginSuccessHandler)
                 .failureHandler(loginFailureHandler)
+                .permitAll()
+            )
+            .logout(logout -> logout
+                .logoutUrl("/api/auth/logout")
+                .logoutSuccessHandler(new HttpStatusReturningLogoutSuccessHandler())
                 .permitAll()
             )
             // HTTP Basic 인증 비활성화
@@ -86,5 +98,23 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
+    /*Role Hierarchy 설정. ADMIN 권한은 USER의 모든 권한을 포함*/
+    @Bean
+    public RoleHierarchy roleHierarchy() {
+        RoleHierarchy hierarchy = RoleHierarchyImpl.fromHierarchy("ROLE_ADMIN > ROLE_USER");
+        System.out.println("[SecurityConfig] RoleHierarchy 설정 완료: ROLE_ADMIN > ROLE_USER");
 
+        return hierarchy;
+    }
+
+    /* 설명. Method Security에서 RoleHierarchy를 사용하기 위한 설정 @PreAuthorize 에서 role 계층 인식 가능 */
+    @Bean
+    static MethodSecurityExpressionHandler methodSecurityExpressionHandler(
+        RoleHierarchy roleHierarchy
+    ) {
+        DefaultMethodSecurityExpressionHandler handler = new DefaultMethodSecurityExpressionHandler();
+        handler.setRoleHierarchy(roleHierarchy);
+        System.out.println("[SecurityConfig] MethodSecurityExpressionHandler 설정 완료");
+        return handler;
+    }
 }

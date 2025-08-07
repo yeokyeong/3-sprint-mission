@@ -5,6 +5,7 @@ import com.sprint.mission.discodeit.dto.request.BinaryContentCreateRequest;
 import com.sprint.mission.discodeit.dto.request.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.request.UserUpdateRequest;
 import com.sprint.mission.discodeit.entity.BinaryContent;
+import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.exception.Common.ResourceNotFoundException;
@@ -61,7 +62,7 @@ public class BasicUserService implements UserService {
         String encodedPassword = passwordEncoder.encode(userCreateRequest.password());
 
         User user = new User(userCreateRequest.username(), userCreateRequest.email(),
-            encodedPassword, nullableProfile);
+            encodedPassword, nullableProfile, Role.USER);
 
         new UserStatus(user, Instant.now());
 
@@ -141,4 +142,27 @@ public class BasicUserService implements UserService {
         this.userRepository.deleteById(userId);
     }
 
+    /* Admin 계정이 하나도 없을때 Admin 계정 생성 */
+    @Transactional
+    @Override
+    public void initAdminIfNotExists() {
+        boolean hasAdmin = userRepository.existsByRole(Role.ADMIN);
+        log.debug("기본 ADMIN 유저 여부 체크: {}", hasAdmin ? "있음" : "없음");
+        if (!hasAdmin) {
+            // 비밀번호 암호화
+            String encodedPassword = passwordEncoder.encode("admin");
+
+            User user = new User("admin", "admin",
+                encodedPassword, null, Role.ADMIN);
+
+            new UserStatus(user, Instant.now());
+
+            //  DB저장
+            User createdUser = userRepository.save(user);
+
+            log.debug("기본 ADMIN 유저 생성 완료: {}, id: {}", createdUser.getUsername(),
+                createdUser.getId());
+        }
+
+    }
 }

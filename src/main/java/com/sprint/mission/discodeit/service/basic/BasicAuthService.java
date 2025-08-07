@@ -1,5 +1,9 @@
 package com.sprint.mission.discodeit.service.basic;
 
+import com.sprint.mission.discodeit.dto.data.UserDto;
+import com.sprint.mission.discodeit.dto.request.UserRoleUpdateRequest;
+import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.exception.User.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.AuthService;
@@ -15,6 +19,16 @@ public class BasicAuthService implements AuthService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
 
+    @Override
+    @Transactional
+    public UserDto updateUserRole(UserRoleUpdateRequest userRoleUpdateRequest) {
+        User user = userRepository.findById(userRoleUpdateRequest.userId()).orElseThrow(() ->
+            new UserNotFoundException(userRoleUpdateRequest.userId().toString()));
+        user.updateRole(userRoleUpdateRequest.newRole());
+
+        return userMapper.toDto(user);
+    }
+
     /* 로그인 기능은 filter 로 옮김 */
 //    @Transactional
 //    @Override
@@ -28,4 +42,5 @@ public class BasicAuthService implements AuthService {
 //
 //        return userMapper.toDto(user);
 //    }
+
 }

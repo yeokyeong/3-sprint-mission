@@ -1,5 +1,6 @@
 package com.sprint.mission.discodeit.dto.data;
 
+import com.sprint.mission.discodeit.entity.Role;
 import java.time.Instant;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
@@ -22,6 +23,6 @@ public class UserDto {
     private Boolean online;
     private Instant createdAt;
     private Instant updatedAt;
-
+    private Role role;
 
 }
