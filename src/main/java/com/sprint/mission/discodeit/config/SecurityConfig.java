@@ -4,6 +4,8 @@ import com.sprint.mission.discodeit.handler.AuthenticationEntryPointHandler;
 import com.sprint.mission.discodeit.handler.CustomAccessDeniedHandler;
 import com.sprint.mission.discodeit.handler.LoginFailureHandler;
 import com.sprint.mission.discodeit.handler.LoginSuccessHandler;
+import jakarta.servlet.ServletException;
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
@@ -18,12 +20,17 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
+import org.springframework.security.core.session.SessionRegistry;
+import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
+import org.springframework.security.web.session.HttpSessionEventPublisher;
+import org.springframework.security.web.session.SessionInformationExpiredEvent;
+import org.springframework.security.web.session.SessionInformationExpiredStrategy;
 
 @Configuration
 @EnableWebSecurity
@@ -36,7 +43,8 @@ public class SecurityConfig {
         LoginSuccessHandler loginSuccessHandler,
         LoginFailureHandler loginFailureHandler,
         AuthenticationEntryPointHandler authenticationEntryPointHandler,
-        CustomAccessDeniedHandler customAccessDeniedHandler) throws Exception {
+        CustomAccessDeniedHandler customAccessDeniedHandler,
+        SessionRegistry sessionRegistry) throws Exception {
         System.out.println("[SecurityConfig] FilterChain 구성 시작");
         http
             // CSRF 설정 - 쿠키기반
@@ -86,7 +94,27 @@ public class SecurityConfig {
                 .authenticationEntryPoint(authenticationEntryPointHandler)
                 // 로그인은 했지만 권한이 없는 사용자가 요청할 때
                 .accessDeniedHandler(customAccessDeniedHandler)
-            );
+            )
+            //동일한 계정으로 동시 로그인할 수 없도록 설정
+            .sessionManagement(session -> session
+                .sessionConcurrency(concurrency -> concurrency
+                    .maximumSessions(1) // 최대 세션 1개
+                    .maxSessionsPreventsLogin(true) // 이미 로그인 상태면 새 로그인 차단
+                    // 세션 만료 시 실행할 액션
+                    .expiredSessionStrategy(new SessionInformationExpiredStrategy() {
+                        @Override
+                        public void onExpiredSessionDetected(SessionInformationExpiredEvent event)
+                            throws IOException, ServletException {
+                            log.warn("다른 위치에서 로그인되어 세션이 종료되었습니다.");
+                        }
+                    })
+                    // 추가적으로 권한 변경된 사용자의 세션을 무효화하기 위해 sessionRegistry 사용
+                    .sessionRegistry(sessionRegistry)
+                )
+            )
+        //권한이 변경된 사용자가 로그인 상태라면 세션을 무효화
+
+        ;
 
         return http.build();
     }
@@ -154,5 +182,15 @@ public class SecurityConfig {
         handler.setRoleHierarchy(roleHierarchy);
         System.out.println("[SecurityConfig] MethodSecurityExpressionHandler 설정 완료");
         return handler;
+    }
+
+    @Bean
+    public SessionRegistry sessionRegistry() {
+        return new SessionRegistryImpl();
+    }
+
+    @Bean
+    public HttpSessionEventPublisher httpSessionEventPublisher() {
+        return new HttpSessionEventPublisher();
     }
 }
