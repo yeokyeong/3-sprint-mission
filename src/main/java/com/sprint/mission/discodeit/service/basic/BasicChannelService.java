@@ -18,6 +18,7 @@ import com.sprint.mission.discodeit.service.ChannelService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,6 +36,7 @@ public class BasicChannelService implements ChannelService {
 
     @Transactional
     @Override
+    @PreAuthorize("hasRole('CHANNEL_MANAGER')")
     public ChannelDto create(PublicChannelCreateRequest publicChannelCreateRequest) {
         Channel channel = new Channel(ChannelType.PUBLIC,
             publicChannelCreateRequest.name(), publicChannelCreateRequest.description(),
@@ -97,6 +99,7 @@ public class BasicChannelService implements ChannelService {
 
     @Transactional
     @Override
+    @PreAuthorize("hasRole('CHANNEL_MANAGER')")
     public ChannelDto update(UUID channelId, PublicChannelUpdateRequest updateRequest) {
         Channel channel = this.channelRepository.findById(channelId)
             .orElseThrow(
@@ -112,6 +115,7 @@ public class BasicChannelService implements ChannelService {
 
     @Transactional
     @Override
+    //TODO : 퍼블릭 채널 생성, 수정, 삭제는 CHANNEL_MANAGER 권한을 가져야합니다
     public void delete(UUID channelId) {
         Channel channel = this.channelRepository.findById(channelId).
             orElseThrow(

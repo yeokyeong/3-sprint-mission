@@ -20,7 +20,7 @@ public class DiscodeitUserDetails implements UserDetails {
     public Collection<? extends GrantedAuthority> getAuthorities() {
         System.out.println("[DiscodeitUserDetails] getAuthorities 실행");
         return List.of(
-            new SimpleGrantedAuthority("ROLE" + userDto.getRole())
+            new SimpleGrantedAuthority("ROLE_" + userDto.getRole())
         );
     }
 
