@@ -11,7 +11,7 @@ import org.springframework.data.jpa.repository.Query;
 
 public interface UserRepository extends JpaRepository<User, UUID> {
 
-    @Query("SELECT u FROM User u LEFT JOIN FETCH u.profile LEFT JOIN FETCH u.status")
+    @Query("SELECT u FROM User u LEFT JOIN FETCH u.profile")
     List<User> findAllWithProfileAndStatus();
 
     @EntityGraph(attributePaths = {"profile"})
