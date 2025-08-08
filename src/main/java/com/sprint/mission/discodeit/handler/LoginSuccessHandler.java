@@ -3,6 +3,7 @@ package com.sprint.mission.discodeit.handler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.discodeit.dto.data.DiscodeitUserDetails;
 import com.sprint.mission.discodeit.dto.data.UserDto;
+import com.sprint.mission.discodeit.utils.SessionContext;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Component;
 public class LoginSuccessHandler implements AuthenticationSuccessHandler {
 
     private final ObjectMapper objectMapper;
+    private final SessionContext sessionContext;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
@@ -35,6 +37,9 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
             response.getWriter().write(responseBody);
 
             System.out.println("[LoginSuccessHandler] 로그인 성공 응답 완료: " + userDto.getEmail());
+            System.out.println(
+                "[LoginSuccessHandler] 로그인 성공 응답 완료 - 세션리스트 : " + sessionContext.getSessionIds(
+                    userDto.getId()).toString());
         } else {
             // 예상치 못한 principal인 경우
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);

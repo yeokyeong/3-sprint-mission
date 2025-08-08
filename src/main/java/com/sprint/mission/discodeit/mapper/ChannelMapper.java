@@ -6,6 +6,7 @@ import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
+import com.sprint.mission.discodeit.utils.SessionContext;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,6 +26,8 @@ public abstract class ChannelMapper {
     private ReadStatusRepository readStatusRepository;
     @Autowired
     private UserMapper userMapper;
+    @Autowired
+    private SessionContext sessionContext;
 
     @Mapping(target = "participants", source = "channel", qualifiedByName = "getParticipants")
     @Mapping(target = "lastMessageAt", source = "channel", qualifiedByName = "getLastMessageAt")
@@ -36,16 +39,23 @@ public abstract class ChannelMapper {
     @Named("getParticipants")
     public List<UserDto> getParticipants(Channel channel) {
         List<UserDto> participants = new ArrayList<>();
+
+        //FIXME. 비즈니스 로직 다 서비스로 뺄것
         this.readStatusRepository.findAllByChannelIdWithUser(channel.getId())
             .stream()
             .map(ReadStatus::getUser)
-            .map(userMapper::toDto).forEach(participants::add);
+            .map((user -> {
+                // status 정보
+                boolean isOnline = sessionContext.getStatusFromSession(user.getId());
+                return userMapper.toDto(user, isOnline);
+            })).forEach(participants::add);
 
         return participants;
     }
 
     @Named("getLastMessageAt")
     public Instant getLastMessageAt(Channel channel) {
+        //FIXME. 비즈니스 로직 다 서비스로 뺄것
         return this.messageRepository.findLastMessageAtByChannelId(channel.getId())
             .orElse(Instant.MIN);
     }

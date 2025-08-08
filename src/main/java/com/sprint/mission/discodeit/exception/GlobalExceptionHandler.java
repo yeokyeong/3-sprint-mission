@@ -6,7 +6,6 @@ import com.sprint.mission.discodeit.exception.Common.CommonException;
 import com.sprint.mission.discodeit.exception.Message.MessageException;
 import com.sprint.mission.discodeit.exception.ReadStatus.ReadStatusException;
 import com.sprint.mission.discodeit.exception.User.UserException;
-import com.sprint.mission.discodeit.exception.UserStatus.UserStatusException;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -45,25 +44,7 @@ public class GlobalExceptionHandler extends RuntimeException {
                 )
             );
     }
-
-    @ExceptionHandler(UserStatusException.class)
-    public ResponseEntity<ErrorResponse> handleException(UserStatusException e) {
-        // 도메인 별 공통 로깅
-        log.error("▶▶▶▶Exception(사용자상태) 발생 : {} - {}", e.getErrorCode().getCode(), e.getMessage());
-
-        // 컨텍스트 정보 로깅
-        e.getDetails().forEach((key, value) ->
-            log.debug("▶▶▶▶▶Exception(사용자상태) 세부정보 : {} = {}", key, value));
-
-        return ResponseEntity.status(e.getErrorCode().getHttpStatus()).body(
-            new ErrorResponse(
-                e.getTimestamp(), e.getErrorCode().getCode(),
-                e.getMessage(), e.getDetails(),
-                e.getClass().getTypeName(),
-                e.getErrorCode().getHttpStatus()
-            )
-        );
-    }
+    
 
     @ExceptionHandler(ChannelException.class)
     public ResponseEntity<ErrorResponse> handleChannelException(ChannelException e) {

@@ -7,7 +7,6 @@ import com.sprint.mission.discodeit.dto.request.UserUpdateRequest;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.exception.Common.ResourceNotFoundException;
 import com.sprint.mission.discodeit.exception.User.UserAlreadyExistException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
@@ -15,7 +14,7 @@ import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
-import java.time.Instant;
+import com.sprint.mission.discodeit.utils.SessionContext;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -36,6 +35,7 @@ public class BasicUserService implements UserService {
     private final BinaryContentStorage binaryContentStorage;
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
+    private final SessionContext sessionContext;
 
     @Transactional
     @Override
@@ -64,12 +64,12 @@ public class BasicUserService implements UserService {
         User user = new User(userCreateRequest.username(), userCreateRequest.email(),
             encodedPassword, nullableProfile, Role.USER);
 
-        new UserStatus(user, Instant.now());
-
-        // 3. DB저장
+        // DB저장
         User createdUser = this.userRepository.save(user);
 
-        return userMapper.toDto(createdUser);
+        // status 정보
+        boolean isOnline = sessionContext.getStatusFromSession(user.getId());
+        return userMapper.toDto(createdUser, isOnline);
     }
 
     @Override
@@ -78,7 +78,9 @@ public class BasicUserService implements UserService {
             .findById(userId)
             .orElseThrow(() -> new ResourceNotFoundException(("UserId = " + userId)));
 
-        return userMapper.toDto(user);
+        // status 정보
+        boolean isOnline = sessionContext.getStatusFromSession(user.getId());
+        return userMapper.toDto(user, isOnline);
     }
 
 
@@ -90,9 +92,14 @@ public class BasicUserService implements UserService {
 
     @Override
     public List<UserDto> findAll() {
+
         return this.userRepository.findAllWithProfileAndStatus()
             .stream()
-            .map(userMapper::toDto)
+            .map((user) -> {
+                // status 정보
+                boolean isOnline = sessionContext.getStatusFromSession(user.getId());
+                return userMapper.toDto(user, isOnline);
+            })
             .toList();
     }
 
@@ -126,7 +133,10 @@ public class BasicUserService implements UserService {
             updateRequest.newPassword(),
             nullableProfile);
 
-        return userMapper.toDto(user);
+        // status 정보
+        boolean isOnline = sessionContext.getStatusFromSession(user.getId());
+
+        return userMapper.toDto(user, isOnline);
     }
 
 
@@ -154,8 +164,6 @@ public class BasicUserService implements UserService {
 
             User user = new User("admin", "admin",
                 encodedPassword, null, Role.ADMIN);
-
-            new UserStatus(user, Instant.now());
 
             //  DB저장
             User createdUser = userRepository.save(user);
