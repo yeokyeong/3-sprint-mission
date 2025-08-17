@@ -38,8 +38,7 @@ public class User extends BaseUpdatableEntity {
     @Enumerated(EnumType.STRING)
     private Role role;
 
-    // 유저 삭제될때 profile 삭제
-    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JoinColumn(name = "profile_id")
     private BinaryContent profile;
 

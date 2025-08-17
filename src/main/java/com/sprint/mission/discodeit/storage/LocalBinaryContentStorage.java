@@ -2,12 +2,12 @@ package com.sprint.mission.discodeit.storage;
 
 import com.sprint.mission.discodeit.dto.data.BinaryContentDto;
 import jakarta.annotation.PostConstruct;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.NoSuchElementException;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -49,28 +49,25 @@ public class LocalBinaryContentStorage implements BinaryContentStorage {
             throw new IllegalArgumentException(
                 "File with key " + binaryContentId + " already exists");
         }
-        try (
-            // 파일과 연결되는 스트림 생성
-            FileOutputStream fos = new FileOutputStream(filePath.toFile());
-        ) {
-            fos.write(bytes);
-            return binaryContentId;
+        try (OutputStream outputStream = Files.newOutputStream(filePath)) {
+            outputStream.write(bytes);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        return binaryContentId;
     }
 
     @Override
     public InputStream get(UUID binaryContentId) {
         Path filePath = this.resolvePath(binaryContentId);
-        if (Files.exists(filePath)) {
-            throw new IllegalArgumentException(
-                "File with key " + binaryContentId + " already exists");
+        if (Files.notExists(filePath)) {
+            throw new NoSuchElementException(
+                "File with key " + binaryContentId + " does not exist");
         }
         try {
-            // 파일과 연결되는 스트림 생성
-            return new FileInputStream(String.valueOf(filePath));
-        } catch (Exception e) {
+            return Files.newInputStream(filePath);
+        } catch (IOException e) {
+            e.printStackTrace();
             throw new RuntimeException(e);
         }
     }
@@ -83,14 +80,14 @@ public class LocalBinaryContentStorage implements BinaryContentStorage {
         return ResponseEntity
             .status(HttpStatus.OK)
             .header(HttpHeaders.CONTENT_DISPOSITION,
-                "attchment; filename=\"" + metaData.fileName() + "\"")
+                "attachment; filename=\"" + metaData.fileName() + "\"")
             .header(HttpHeaders.CONTENT_TYPE, metaData.contentType())
             .header(HttpHeaders.CONTENT_LENGTH, String.valueOf(metaData.size()))
             .body(resource);
     }
 
     private Path resolvePath(UUID id) {
-        return this.root.resolve(String.valueOf(id) + ".ser");
+        return this.root.resolve(id.toString());
     }
 
 }
