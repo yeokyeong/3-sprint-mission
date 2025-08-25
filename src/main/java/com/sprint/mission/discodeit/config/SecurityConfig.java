@@ -16,6 +16,7 @@ import org.springframework.security.access.expression.method.DefaultMethodSecuri
 import org.springframework.security.access.expression.method.MethodSecurityExpressionHandler;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -112,8 +113,7 @@ public class SecurityConfig {
                     .sessionRegistry(sessionRegistry)
                 )
             )
-        //권한이 변경된 사용자가 로그인 상태라면 세션을 무효화
-
+            .rememberMe(Customizer.withDefaults())
         ;
 
         return http.build();
