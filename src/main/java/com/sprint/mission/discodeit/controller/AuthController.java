@@ -1,18 +1,21 @@
 package com.sprint.mission.discodeit.controller;
 
 import com.sprint.mission.discodeit.controller.api.AuthApi;
-import com.sprint.mission.discodeit.dto.data.DiscodeitUserDetails;
+import com.sprint.mission.discodeit.dto.data.JwtDto;
+import com.sprint.mission.discodeit.dto.data.JwtInformation;
 import com.sprint.mission.discodeit.dto.data.UserDto;
 import com.sprint.mission.discodeit.dto.request.UserRoleUpdateRequest;
-import com.sprint.mission.discodeit.exception.User.UserNotFoundException;
+import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
 import com.sprint.mission.discodeit.service.AuthService;
 import jakarta.annotation.security.RolesAllowed;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.web.csrf.CsrfToken;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -25,6 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController implements AuthApi {
 
     private final AuthService authService;
+    private final JwtTokenProvider jwtTokenProvider;
     /* 로그인 기능은 filter 로 옮김 */
 //    /* 유저 로그인 */
 //    @PostMapping(path = "/login")
@@ -48,20 +52,20 @@ public class AuthController implements AuthApi {
     }
 
     /* 세션ID로 user 정보 조회 */
-    @GetMapping("/me")
-    @Override
-    public ResponseEntity<UserDto> getMyInfoFromSession(
-        @AuthenticationPrincipal DiscodeitUserDetails userDetails) {
-        log.debug("[세션으로 Principal 정보 요청]");
-
-        if (userDetails == null) {
-            log.debug("[세션으로 Principal 정보 요청 실패]");
-            throw new UserNotFoundException();
-        }
-
-        log.debug("[세션으로 Principal 정보 요청 성공] userDto: {}", userDetails);
-        return ResponseEntity.ok().body(userDetails.getUserDto());
-    }
+//    @GetMapping("/me")
+//    @Override
+//    public ResponseEntity<UserDto> getMyInfoFromSession(
+//        @AuthenticationPrincipal DiscodeitUserDetails userDetails) {
+//        log.debug("[세션으로 Principal 정보 요청]");
+//
+//        if (userDetails == null) {
+//            log.debug("[세션으로 Principal 정보 요청 실패]");
+//            throw new UserNotFoundException();
+//        }
+//
+//        log.debug("[세션으로 Principal 정보 요청 성공] userDto: {}", userDetails);
+//        return ResponseEntity.ok().body(userDetails.getUserDto());
+//    }
 
     /* role 변경 */
     @PutMapping("/role")
@@ -75,5 +79,23 @@ public class AuthController implements AuthApi {
         log.debug("[유저 role 변경 요청 성공] new role: {}", userDto.getRole());
         return ResponseEntity.ok().body(userDto);
 
+    }
+
+    @PostMapping("/refresh")
+    @Override
+    public ResponseEntity<JwtDto> refreshAccessToken(
+        @CookieValue(value = "REFRESH_TOKEN") String refreshToken,
+        HttpServletResponse response) {
+        try {
+            // 1. refresh 토큰 검증 후 새로운 refresh 토큰, access 토큰 발급
+            JwtInformation jwtInformation = authService.refreshToken(refreshToken);
+            // 2. refresh 토큰 쿠키에 셋팅
+            jwtTokenProvider.addRefreshTokenAtCookie(response, jwtInformation.refreshToken());
+
+            return ResponseEntity.ok()
+                .body(new JwtDto(jwtInformation.userDto(), jwtInformation.accessToken()));
+        } catch (Exception e) {
+            return ResponseEntity.status(401).build();
+        }
     }
 }
