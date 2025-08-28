@@ -37,9 +37,14 @@ public enum ErrorCode {
     DUPLICATE_READSTATUS(400, "READSTATUS_001", "해당하는 읽음상태가 이미 존재합니다."),
 
     // Message 관련 오류 (4xx)
-    ACCESS_DENIED_MESSAGE(400, "MESSAGE_001", "유저가 참여하지 않은 채팅방에는 메세지를 보낼수 없습니다.");
+    ACCESS_DENIED_MESSAGE(400, "MESSAGE_001", "유저가 참여하지 않은 채팅방에는 메세지를 보낼수 없습니다."),
 
     // BinaryContent 관련 오류 (4xx)
+
+    // security 관련 오류
+    INVALID_TOKEN(401, "SECURITY_001", "토큰이 유효하지 않습니다."),
+    INVALID_USER_DETAILS(401, "SECURITY_002", "사용자 인증 정보(UserDetails)가 유효하지 않습니다."),
+    ;
 
     private final int httpStatus;
     private final String code;
