@@ -7,10 +7,13 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.security.Principal;
 import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.stereotype.Component;
 
@@ -25,11 +28,16 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
     @Override
     public void handle(HttpServletRequest request, HttpServletResponse response,
         AccessDeniedException accessDeniedException) throws IOException, ServletException {
-        log.info("[CustomAccessDeniedHandler] 권한이 없는 사용자가 요청: {}",
-            request.getUserPrincipal().toString());
 
-        log.info("[CustomAccessDeniedHandler] 에러메세지: {}",
-            accessDeniedException.getCause().toString());
+        String principalName = resolvePrincipalName(request);
+
+        log.info("[CustomAccessDeniedHandler] 권한이 없는 사용자가 요청: {}",
+            principalName);
+
+        if (!(accessDeniedException.getCause() == null)) {
+            log.info("[CustomAccessDeniedHandler] 에러메세지: {}",
+                accessDeniedException.getCause().toString());
+        }
 
         // 응답 헤더 설정
         response.setContentType("application/json");
@@ -47,5 +55,18 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
         );
         response.getWriter().write(responseBody);
     }
+
+    private String resolvePrincipalName(HttpServletRequest request) {
+        Principal principal = request.getUserPrincipal();
+        if (principal != null) {
+            return principal.getName();
+        }
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null) {
+            return authentication.getName();
+        }
+        return "anonymous";
+    }
+
 
 }
