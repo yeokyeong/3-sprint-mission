@@ -90,10 +90,10 @@ public class AuthController implements AuthApi {
             // 1. refresh 토큰 검증 후 새로운 refresh 토큰, access 토큰 발급
             JwtInformation jwtInformation = authService.refreshToken(refreshToken);
             // 2. refresh 토큰 쿠키에 셋팅
-            jwtTokenProvider.addRefreshTokenAtCookie(response, jwtInformation.refreshToken());
+            jwtTokenProvider.addRefreshTokenAtCookie(response, jwtInformation.getRefreshToken());
 
             return ResponseEntity.ok()
-                .body(new JwtDto(jwtInformation.userDto(), jwtInformation.accessToken()));
+                .body(new JwtDto(jwtInformation.getUserDto(), jwtInformation.getAccessToken()));
         } catch (Exception e) {
             return ResponseEntity.status(401).build();
         }
