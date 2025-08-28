@@ -73,6 +73,15 @@ info:
 
 
 
+# JWT 설정
+jwt:
+  access-token:
+    secret: 25TsK+IZGYRUVYZa5GFsgwhhZKsJOwaiysuM9o9tkvk= #change-me-access-secret-for-dev-only
+    exp: 900000        # 15분(ms)
+  refresh-token:
+    secret: thldHDIagbDTJ6WImb9d29vDigMJ+2bMnvTb/JGRMQ0= #change-me-refresh-secret-for-dev-only
+    exp: 3600000       # 1시간(ms)
+
 #  # Admin 서버 설정 정보 추가
 #  boot:
 #    admin:

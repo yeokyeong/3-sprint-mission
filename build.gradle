@@ -63,6 +63,9 @@ dependencies {
     implementation 'software.amazon.awssdk:s3:2.31.7'
 
     implementation 'io.github.cdimascio:dotenv-java:3.2.0'
+
+    // https://mvnrepository.com/artifact/com.nimbusds/nimbus-jose-jwt
+    implementation 'com.nimbusds:nimbus-jose-jwt:10.3'
 }
 
 tasks.withType(JavaCompile) {
