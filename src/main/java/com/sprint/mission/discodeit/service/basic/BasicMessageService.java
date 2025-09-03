@@ -1,6 +1,7 @@
 package com.sprint.mission.discodeit.service.basic;
 
 import com.sprint.mission.discodeit.dto.data.MessageDto;
+import com.sprint.mission.discodeit.dto.event.BinaryContentCreatedEvent;
 import com.sprint.mission.discodeit.dto.request.BinaryContentCreateRequest;
 import com.sprint.mission.discodeit.dto.request.MessageCreateRequest;
 import com.sprint.mission.discodeit.dto.request.MessageUpdateRequest;
@@ -28,6 +29,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -48,6 +50,8 @@ public class BasicMessageService implements MessageService {
     private final BinaryContentRepository binaryContentRepository;
     private final MessageMapper messageMapper;
     private final PageResponseMapper pageResponseMapper;
+    private final ApplicationEventPublisher eventPublisher;
+    
 
     @Transactional
     @Override
@@ -81,7 +85,10 @@ public class BasicMessageService implements MessageService {
                 BinaryContent binaryContent = new BinaryContent(fileName, (long) bytes.length,
                     contentType);
                 binaryContentRepository.save(binaryContent);
-                binaryContentStorage.put(binaryContent.getId(), bytes);
+                //binaryContent DB 저장 후 event 발행
+                eventPublisher.publishEvent(
+                    new BinaryContentCreatedEvent(binaryContent.getId(), bytes));
+
                 return binaryContent;
             })
             .toList();

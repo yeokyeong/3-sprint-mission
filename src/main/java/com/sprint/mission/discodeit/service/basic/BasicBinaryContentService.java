@@ -1,6 +1,7 @@
 package com.sprint.mission.discodeit.service.basic;
 
 import com.sprint.mission.discodeit.dto.data.BinaryContentDto;
+import com.sprint.mission.discodeit.dto.event.BinaryContentCreatedEvent;
 import com.sprint.mission.discodeit.dto.request.BinaryContentCreateRequest;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.exception.Common.ResourceNotFoundException;
@@ -11,6 +12,7 @@ import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +24,7 @@ public class BasicBinaryContentService implements BinaryContentService {
     private final BinaryContentRepository binaryContentRepository;
     private final BinaryContentStorage binaryContentStorage;
     private final BinaryContentMapper binaryContentMapper;
+    private final ApplicationEventPublisher eventPublisher;
 
 
     @Transactional
@@ -34,7 +37,9 @@ public class BasicBinaryContentService implements BinaryContentService {
         );
 
         this.binaryContentRepository.save(binaryContent);
-        binaryContentStorage.put(binaryContent.getId(), createRequest.bytes());
+        //binaryContent DB 저장 후 event 발행
+        eventPublisher.publishEvent(
+            new BinaryContentCreatedEvent(binaryContent.getId(), createRequest.bytes()));
 
         return binaryContentMapper.toDto(binaryContent);
     }
