@@ -54,3 +54,4 @@ bin/
 
 ## log ##
 /logs/*
+/AWSCLIV2.pkg
