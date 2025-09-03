@@ -6,6 +6,7 @@ import com.sprint.mission.discodeit.dto.request.BinaryContentCreateRequest;
 import com.sprint.mission.discodeit.dto.request.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.request.UserUpdateRequest;
 import com.sprint.mission.discodeit.entity.BinaryContent;
+import com.sprint.mission.discodeit.entity.BinaryContentStatus;
 import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.exception.Common.ResourceNotFoundException;
@@ -57,7 +58,7 @@ public class BasicUserService implements UserService {
             profileRequest -> {
                 BinaryContent binaryContent = new BinaryContent(profileRequest.fileName(),
                     (long) profileRequest.bytes().length,
-                    profileRequest.contentType());
+                    profileRequest.contentType(), BinaryContentStatus.PROCESSING);
                 binaryContentRepository.save(binaryContent);
                 //binaryContent DB 저장 후 event 발행
                 eventPublisher.publishEvent(
@@ -131,7 +132,7 @@ public class BasicUserService implements UserService {
             profileRequest -> {
                 BinaryContent binaryContent = new BinaryContent(profileRequest.fileName(),
                     (long) profileRequest.bytes().length,
-                    profileRequest.contentType());
+                    profileRequest.contentType(), BinaryContentStatus.PROCESSING);
                 binaryContentRepository.save(binaryContent);
                 //binaryContent DB 저장 후 event 발행
                 eventPublisher.publishEvent(

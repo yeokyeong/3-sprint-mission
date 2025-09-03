@@ -4,6 +4,7 @@ import com.sprint.mission.discodeit.dto.data.BinaryContentDto;
 import com.sprint.mission.discodeit.dto.event.BinaryContentCreatedEvent;
 import com.sprint.mission.discodeit.dto.request.BinaryContentCreateRequest;
 import com.sprint.mission.discodeit.entity.BinaryContent;
+import com.sprint.mission.discodeit.entity.BinaryContentStatus;
 import com.sprint.mission.discodeit.exception.Common.ResourceNotFoundException;
 import com.sprint.mission.discodeit.mapper.BinaryContentMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
@@ -34,6 +35,7 @@ public class BasicBinaryContentService implements BinaryContentService {
             createRequest.fileName(),
             (long) createRequest.bytes().length,
             createRequest.contentType()
+            , BinaryContentStatus.PROCESSING
         );
 
         this.binaryContentRepository.save(binaryContent);

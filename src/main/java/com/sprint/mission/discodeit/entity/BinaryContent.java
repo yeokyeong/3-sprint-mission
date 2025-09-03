@@ -3,6 +3,8 @@ package com.sprint.mission.discodeit.entity;
 import com.sprint.mission.discodeit.entity.base.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -29,5 +31,14 @@ public class BinaryContent extends BaseEntity {
 
     @Column(name = "content_type", nullable = false)
     private String contentType;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private BinaryContentStatus status;
+
+    public void updateStatus(BinaryContentStatus status) {
+        System.out.println("binaryContentStatus 업데이트완료. id: " + getId() + " status: " + status);
+        this.status = status;
+    }
 
 }

@@ -1,6 +1,7 @@
 package com.sprint.mission.discodeit.storage;
 
 import com.sprint.mission.discodeit.dto.data.BinaryContentDto;
+import com.sprint.mission.discodeit.entity.BinaryContentStatus;
 import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.io.InputStream;
@@ -9,6 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.NoSuchElementException;
 import java.util.UUID;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.io.InputStreamResource;
@@ -20,6 +22,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @ConditionalOnProperty(name = "discodeit.storage.type", havingValue = "local")
+@Slf4j
 public class LocalBinaryContentStorage implements BinaryContentStorage {
 
     private final Path root;
@@ -42,7 +45,7 @@ public class LocalBinaryContentStorage implements BinaryContentStorage {
 
 
     @Override
-    public UUID put(UUID binaryContentId, byte[] bytes) {
+    public BinaryContentStatus put(UUID binaryContentId, byte[] bytes) {
         // 객체를 저장할 파일 path 생성
         Path filePath = this.resolvePath(binaryContentId);
         if (Files.exists(filePath)) {
@@ -51,10 +54,11 @@ public class LocalBinaryContentStorage implements BinaryContentStorage {
         }
         try (OutputStream outputStream = Files.newOutputStream(filePath)) {
             outputStream.write(bytes);
+            return BinaryContentStatus.SUCCESS;
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            log.error("I/O error while writing file: {}", binaryContentId, e);
+            return BinaryContentStatus.FAIL;
         }
-        return binaryContentId;
     }
 
     @Override

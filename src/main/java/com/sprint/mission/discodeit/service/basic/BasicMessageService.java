@@ -7,6 +7,7 @@ import com.sprint.mission.discodeit.dto.request.MessageCreateRequest;
 import com.sprint.mission.discodeit.dto.request.MessageUpdateRequest;
 import com.sprint.mission.discodeit.dto.response.PageResponse;
 import com.sprint.mission.discodeit.entity.BinaryContent;
+import com.sprint.mission.discodeit.entity.BinaryContentStatus;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ChannelType;
 import com.sprint.mission.discodeit.entity.Message;
@@ -51,7 +52,7 @@ public class BasicMessageService implements MessageService {
     private final MessageMapper messageMapper;
     private final PageResponseMapper pageResponseMapper;
     private final ApplicationEventPublisher eventPublisher;
-    
+
 
     @Transactional
     @Override
@@ -83,7 +84,7 @@ public class BasicMessageService implements MessageService {
                 byte[] bytes = attachmentRequest.bytes();
 
                 BinaryContent binaryContent = new BinaryContent(fileName, (long) bytes.length,
-                    contentType);
+                    contentType, BinaryContentStatus.PROCESSING);
                 binaryContentRepository.save(binaryContent);
                 //binaryContent DB 저장 후 event 발행
                 eventPublisher.publishEvent(

@@ -1,6 +1,7 @@
 package com.sprint.mission.discodeit.storage;
 
 import com.sprint.mission.discodeit.dto.data.BinaryContentDto;
+import com.sprint.mission.discodeit.entity.BinaryContentStatus;
 import jakarta.annotation.PostConstruct;
 import java.io.InputStream;
 import java.net.URI;
@@ -60,7 +61,7 @@ public class S3BinaryContentStorage implements BinaryContentStorage {
     //XXX: presignedUrl로 클라이언트에서 바로 AWS에 파일 get,put할수있는데, 이 메서드가 왜 필요하지?,
     // put은 서버에서 presignedUrl 없이 직접 파일 넣어주고, download만 presignedUrl 사용하는건가?
     @Override
-    public UUID put(UUID binaryContentId, byte[] bytes) {
+    public BinaryContentStatus put(UUID binaryContentId, byte[] bytes) {
         try {
             PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                 .bucket(this.s3Bucket)
@@ -73,17 +74,17 @@ public class S3BinaryContentStorage implements BinaryContentStorage {
             if (response.sdkHttpResponse().isSuccessful() &&
                 response.eTag() != null) {
                 log.info("S3 Object Upload Success");
+                return BinaryContentStatus.SUCCESS;
             } else {
-                //TODO : 새로운 에러타입 만들어서 넣을것
-                throw new RuntimeException();
+                log.error("fail to upload at S3 id: {}", binaryContentId);
+                return BinaryContentStatus.FAIL;
             }
 
         } catch (Exception e) {
-            //TODO : 새로운 에러타입 만들어서 넣을것
-            throw new RuntimeException(e);
+            log.error("I/O error while writing file: {}", binaryContentId, e);
+            return BinaryContentStatus.FAIL;
         }
 
-        return binaryContentId;
     }
 
     //XXX. deprecated. 대신 download() 메서드 사용함

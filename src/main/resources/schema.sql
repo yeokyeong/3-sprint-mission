@@ -19,8 +19,8 @@ CREATE TABLE IF NOT EXISTS binary_contents
     created_at   timestamp with time zone NOT NULL,
     file_name    varchar(255)             NOT NULL,
     size         bigint                   NOT NULL,
-    content_type varchar(100)             NOT NULL
---     ,bytes        bytea        NOT NULL
+    content_type varchar(100)             NOT NULL,
+    status       varchar(20)              NOT NULL
 );
 
 -- UserStatus
@@ -125,3 +125,15 @@ ALTER TABLE read_statuses
         FOREIGN KEY (channel_id)
             REFERENCES channels (id)
             ON DELETE CASCADE;
+
+
+
+-- ALTER TABLE binary_contents
+--     ADD COLUMN status varchar(20);
+--
+-- UPDATE binary_contents
+-- set status = 'SUCCESS'
+-- where status IS NULL;
+--
+-- ALTER TABLE binary_contents
+--     ALTER COLUMN status SET NOT NULL;
