@@ -43,6 +43,15 @@ public class BasicChannelService implements ChannelService {
             publicChannelCreateRequest.ownerId());
         this.channelRepository.save(channel);
 
+        /* 모든 유저들의 해당 채널의 ReadStatus 생성 */
+        List<ReadStatus> readStatuses = userRepository.findAll().stream()
+            .map(user -> new ReadStatus(user, channel, channel.getCreatedAt()))
+            .toList();
+
+        System.out.println("readStatuses  = " + readStatuses.size());
+        
+        this.readStatusRepository.saveAll(readStatuses);
+
         return channelMapper.toDto(channel);
     }
 

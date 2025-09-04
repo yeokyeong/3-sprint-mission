@@ -7,12 +7,17 @@ import com.sprint.mission.discodeit.dto.request.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.request.UserUpdateRequest;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.BinaryContentStatus;
+import com.sprint.mission.discodeit.entity.Channel;
+import com.sprint.mission.discodeit.entity.ChannelType;
+import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.exception.Common.ResourceNotFoundException;
 import com.sprint.mission.discodeit.exception.User.UserAlreadyExistException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
+import com.sprint.mission.discodeit.repository.ChannelRepository;
+import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
@@ -35,7 +40,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class BasicUserService implements UserService {
 
     private final UserRepository userRepository;
+    private final ChannelRepository channelRepository;
     private final BinaryContentRepository binaryContentRepository;
+    private final ReadStatusRepository readStatusRepository;
     private final BinaryContentStorage binaryContentStorage;
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
@@ -75,6 +82,16 @@ public class BasicUserService implements UserService {
 
         // DB저장
         User createdUser = this.userRepository.save(user);
+
+        /*  해당 유저 공개 채널의 ReadStatus 생성 */
+        List<Channel> publicChannels = channelRepository.findAllByType(ChannelType.PUBLIC);
+        System.out.println("publicChannels 채널 리스트 = " + publicChannels);
+        List<ReadStatus> readStatuses = publicChannels.stream()
+            .map((channel -> new ReadStatus(user, channel, channel.getCreatedAt())
+            )).toList();
+        System.out.println("readStatuses  = " + readStatuses.size());
+
+        this.readStatusRepository.saveAll(readStatuses);
 
         // status 정보
         boolean isOnline = sessionContext.getStatusFromSession(user.getId());
