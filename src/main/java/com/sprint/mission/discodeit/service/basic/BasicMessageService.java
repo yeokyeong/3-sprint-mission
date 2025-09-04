@@ -2,6 +2,7 @@ package com.sprint.mission.discodeit.service.basic;
 
 import com.sprint.mission.discodeit.dto.data.MessageDto;
 import com.sprint.mission.discodeit.dto.event.BinaryContentCreatedEvent;
+import com.sprint.mission.discodeit.dto.event.MessageCreatedEvent;
 import com.sprint.mission.discodeit.dto.request.BinaryContentCreateRequest;
 import com.sprint.mission.discodeit.dto.request.MessageCreateRequest;
 import com.sprint.mission.discodeit.dto.request.MessageUpdateRequest;
@@ -97,6 +98,11 @@ public class BasicMessageService implements MessageService {
         Message message = new Message(user, channel, createRequest.content(), attachments);
 
         this.messageRepository.save(message);
+
+        //메세지 생성시 이벤트 발생
+        eventPublisher.publishEvent(
+            new MessageCreatedEvent(message.getId(), createRequest.authorId(),
+                createRequest.channelId()));
 
         /* 채널 lastMessageAt 업데이트 */
         channel.setLastMessageAt(Instant.now());

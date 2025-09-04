@@ -4,7 +4,9 @@ import com.nimbusds.jose.JOSEException;
 import com.sprint.mission.discodeit.dto.data.DiscodeitUserDetails;
 import com.sprint.mission.discodeit.dto.data.JwtInformation;
 import com.sprint.mission.discodeit.dto.data.UserDto;
+import com.sprint.mission.discodeit.dto.event.RoleUpdatedEvent;
 import com.sprint.mission.discodeit.dto.request.UserRoleUpdateRequest;
+import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.exception.Common.InternalServerException;
 import com.sprint.mission.discodeit.exception.Common.SecurityException;
@@ -16,6 +18,7 @@ import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
 import com.sprint.mission.discodeit.service.AuthService;
 import com.sprint.mission.discodeit.utils.SessionContext;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -31,6 +34,7 @@ public class BasicAuthService implements AuthService {
     private final UserMapper userMapper;
     private final SessionContext sessionContext;
     private final JwtTokenProvider jwtTokenProvider;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Override
     @Transactional
@@ -38,10 +42,16 @@ public class BasicAuthService implements AuthService {
     public UserDto updateUserRole(UserRoleUpdateRequest userRoleUpdateRequest) {
         User user = userRepository.findById(userRoleUpdateRequest.userId()).orElseThrow(() ->
             new UserNotFoundException(userRoleUpdateRequest.userId().toString()));
+        Role oldRole = user.getRole();
         user.updateRole(userRoleUpdateRequest.newRole());
 
         // role이 바뀐 유저는 세션 무효화
         sessionContext.expireUpdatedUserSession(userRoleUpdateRequest.userId());
+
+        // 권한 변경 시 알림 이벤트 발행
+        applicationEventPublisher.publishEvent(
+            new RoleUpdatedEvent(userRoleUpdateRequest.userId(), oldRole,
+                userRoleUpdateRequest.newRole()));
 
         // status 정보
         boolean isOnline = sessionContext.getStatusFromSession(user.getId());
