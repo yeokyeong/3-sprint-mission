@@ -66,12 +66,13 @@ CREATE TABLE IF NOT EXISTS message_attachments
 -- ReadStatus
 CREATE TABLE IF NOT EXISTS read_statuses
 (
-    id           uuid PRIMARY KEY,
-    created_at   timestamp with time zone NOT NULL,
-    updated_at   timestamp with time zone,
-    user_id      uuid                     NOT NULL,
-    channel_id   uuid                     NOT NULL,
-    last_read_at timestamp with time zone NOT NULL,
+    id                   uuid PRIMARY KEY,
+    created_at           timestamp with time zone NOT NULL,
+    updated_at           timestamp with time zone,
+    user_id              uuid                     NOT NULL,
+    channel_id           uuid                     NOT NULL,
+    last_read_at         timestamp with time zone NOT NULL,
+    notification_enabled boolean                  NOT NULL,
     UNIQUE (user_id, channel_id)
 );
 
@@ -148,3 +149,14 @@ ALTER TABLE read_statuses
 --
 -- ALTER TABLE binary_contents
 --     ALTER COLUMN status SET NOT NULL;
+
+
+-- ALTER TABLE read_statuses
+--     ADD COLUMN notification_enabled boolean;
+--
+-- UPDATE read_statuses
+-- set notification_enabled = true
+-- where notification_enabled IS NULL;
+
+-- ALTER TABLE read_statuses
+--     ALTER COLUMN notification_enabled SET NOT NULL;

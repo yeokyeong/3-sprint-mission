@@ -80,7 +80,7 @@ public class BasicReadStatusService implements ReadStatusService {
             .orElseThrow(
                 () -> new ResourceNotFoundException("readStatusId = " + readStatusId));
 
-        readStatus.update(updateRequest.newLastReadAt());
+        readStatus.update(updateRequest.newLastReadAt(), updateRequest.newNotificationEnabled());
 
         return this.readStatusMapper.toDto(readStatus);
     }
