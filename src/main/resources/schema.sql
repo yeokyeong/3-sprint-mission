@@ -76,6 +76,17 @@ CREATE TABLE IF NOT EXISTS read_statuses
 );
 
 
+-- BinaryContent
+CREATE TABLE IF NOT EXISTS notifications
+(
+    id          uuid PRIMARY KEY,
+    receiver_id uuid                     NOT NULL,
+    title       varchar(255)             NOT NULL,
+    content     text,
+    created_at  timestamp with time zone NOT NULL
+);
+
+
 -- 제약 조건
 -- User (1) -> BinaryContent (1)
 ALTER TABLE users

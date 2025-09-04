@@ -26,6 +26,7 @@ public enum ErrorCode {
     ACCOUNT_DISABLED(401, "ACCOUNT_DISABLED", "비활성화된 계정입니다."),
     AUTHENTICATION_ERROR(401, "AUTHENTICATION_ERROR", "로그인에 실패했습니다."),
     UNAUTHORIZED_REQUEST(401, "UNAUTHORIZED_REQUEST", "로그인이 필요합니다."),
+    UNAUTHORIZED_USER(403, "UNAUTHORIZED_USER", "해당 권한이 없습니다."),
 
     // UserStatus 관련 오류 (4xx)
     DUPLICATE_USERSTATUS(400, "USERSTATUS_001", "해당하는 유저상태가 이미 존재합니다."),
