@@ -3,10 +3,10 @@ package com.sprint.mission.discodeit.storage;
 import com.sprint.mission.discodeit.dto.data.BinaryContentDto;
 import com.sprint.mission.discodeit.entity.BinaryContentStatus;
 import jakarta.annotation.PostConstruct;
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.time.Duration;
+import java.util.NoSuchElementException;
 import java.util.UUID;
 import lombok.Getter;
 import lombok.Setter;
@@ -27,6 +27,7 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectResponse;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
@@ -87,24 +88,41 @@ public class S3BinaryContentStorage implements BinaryContentStorage {
 
     }
 
-    //XXX. deprecated. 대신 download() 메서드 사용함
     @Override
     public InputStream get(UUID binaryContentId) {
-        return null;
+        String key = binaryContentId.toString();
+        try {
+            S3Client s3Client = getS3Client();
+
+            GetObjectRequest request = GetObjectRequest.builder()
+                .bucket(this.s3Bucket)
+                .key(key)
+                .build();
+
+            byte[] bytes = s3Client.getObjectAsBytes(request).asByteArray();
+            return new ByteArrayInputStream(bytes);
+        } catch (S3Exception e) {
+            log.error("S3에서 파일 다운로드 실패: {}", e.getMessage());
+            throw new NoSuchElementException("File with key " + key + " does not exist");
+        }
     }
 
     @Override
     public ResponseEntity<Resource> download(BinaryContentDto binaryContent) {
-        HttpHeaders httpHeaders = new HttpHeaders();
         try {
-            URI presignedUrl = new URI(
-                this.generatePresignedUrl(binaryContent.fileName(), binaryContent.contentType(),
-                    SdkHttpMethod.GET));
-            httpHeaders.setLocation(presignedUrl);
-            return new ResponseEntity<>(httpHeaders, HttpStatus.PERMANENT_REDIRECT);
-        } catch (URISyntaxException e) {
-            // TODO: error handler 내부 처리
-            throw new RuntimeException(e);
+            String key = binaryContent.id().toString();
+            String presignedUrl = generatePresignedUrl(key, binaryContent.contentType(),
+                SdkHttpMethod.GET);
+
+            log.info("생성된 Presigned URL: {}", presignedUrl);
+
+            return ResponseEntity
+                .status(HttpStatus.FOUND)
+                .header(HttpHeaders.LOCATION, presignedUrl)
+                .build();
+        } catch (Exception e) {
+            log.error("Presigned URL 생성 실패: {}", e.getMessage());
+            throw new RuntimeException("Presigned URL 생성 실패", e);
         }
     }
 

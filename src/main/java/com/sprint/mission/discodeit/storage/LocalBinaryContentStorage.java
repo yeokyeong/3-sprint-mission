@@ -53,12 +53,17 @@ public class LocalBinaryContentStorage implements BinaryContentStorage {
                 "File with key " + binaryContentId + " already exists");
         }
         try (OutputStream outputStream = Files.newOutputStream(filePath)) {
+//            Thread.sleep(3000);
             outputStream.write(bytes);
             return BinaryContentStatus.SUCCESS;
         } catch (IOException e) {
             log.error("I/O error while writing file: {}", binaryContentId, e);
             return BinaryContentStatus.FAIL;
         }
+//        catch (InterruptedException e) {
+//            Thread.currentThread().interrupt();
+//            throw new RuntimeException("Thread interrupted while simulating delay", e);
+//        }
     }
 
     @Override
