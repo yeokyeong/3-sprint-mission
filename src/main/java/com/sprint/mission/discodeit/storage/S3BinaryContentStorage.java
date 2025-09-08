@@ -1,6 +1,7 @@
 package com.sprint.mission.discodeit.storage;
 
 import com.sprint.mission.discodeit.dto.data.BinaryContentDto;
+import com.sprint.mission.discodeit.dto.event.BinaryContentCreateFailEvent;
 import com.sprint.mission.discodeit.entity.BinaryContentStatus;
 import jakarta.annotation.PostConstruct;
 import java.io.ByteArrayInputStream;
@@ -11,15 +12,21 @@ import java.util.UUID;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Recover;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.http.SdkHttpMethod;
 import software.amazon.awssdk.regions.Region;
@@ -47,8 +54,10 @@ public class S3BinaryContentStorage implements BinaryContentStorage {
     private String s3Bucket;
     private String s3Region;
     private String s3PresignedUrlExpiration;
+    private ApplicationEventPublisher eventPublisher;
 
-    public S3BinaryContentStorage() {
+    public S3BinaryContentStorage(ApplicationEventPublisher eventPublisher) {
+        this.eventPublisher = eventPublisher;
     }
 
     @PostConstruct
@@ -61,9 +70,16 @@ public class S3BinaryContentStorage implements BinaryContentStorage {
 
     //XXX: presignedUrl로 클라이언트에서 바로 AWS에 파일 get,put할수있는데, 이 메서드가 왜 필요하지?,
     // put은 서버에서 presignedUrl 없이 직접 파일 넣어주고, download만 presignedUrl 사용하는건가?
+    @Retryable(
+        retryFor = {Exception.class},
+        maxAttempts = 4, // 최초호출 + 재시도 3회
+//        backoff = @Backoff(delay = 500, multiplier = 2.0)  // 0.5s -> 1s -> 2s
+        backoff = @Backoff(delay = 0)  // 테스트용
+    )
     @Override
     public BinaryContentStatus put(UUID binaryContentId, byte[] bytes) {
         try {
+            log.info("[S3BinaryContentStorage - put] 시작 binaryContentId:{}", binaryContentId);
             PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                 .bucket(this.s3Bucket)
                 .key(binaryContentId.toString())
@@ -72,20 +88,42 @@ public class S3BinaryContentStorage implements BinaryContentStorage {
             PutObjectResponse response = this.getS3Client()
                 .putObject(putObjectRequest, RequestBody.fromBytes(bytes));
 
-            if (response.sdkHttpResponse().isSuccessful() &&
-                response.eTag() != null) {
-                log.info("S3 Object Upload Success");
-                return BinaryContentStatus.SUCCESS;
-            } else {
-                log.error("fail to upload at S3 id: {}", binaryContentId);
-                return BinaryContentStatus.FAIL;
-            }
+            throw SdkClientException.create("테스트 실패");
+//            if (response.sdkHttpResponse().isSuccessful() &&
+//                response.eTag() != null) {
+//                log.info("S3 Object Upload Success");
+//                return BinaryContentStatus.SUCCESS;
+//            } else {
+//                log.error("fail to upload at S3 id: {}", binaryContentId);
+//             throw new S3Exception("업로드 실패", null);
+//                return BinaryContentStatus.FAIL;
+//            }
 
-        } catch (Exception e) {
-            log.error("I/O error while writing file: {}", binaryContentId, e);
-            return BinaryContentStatus.FAIL;
+        } catch (S3Exception e) {
+            log.error("S3Exception while putting file: {}", binaryContentId, e);
+            throw e;
+        } catch (RuntimeException e) {
+            log.error("RuntimeException while putting file: {}", binaryContentId, e);
+            throw e;
         }
 
+    }
+
+    @Recover
+    public BinaryContentStatus recoverOnFailure(Exception cause, UUID binaryContentId,
+        byte[] bytes) {
+        String requestId = MDC.get("request-id");
+        System.out.println("recoverOnFailure requestId = " + requestId);
+        log.error("[S3] putObject final failure. key={}, cause={}", binaryContentId,
+            cause.toString());
+
+        //관리자에게 파일 업로드 실패 알림 보내기
+        BinaryContentCreateFailEvent failedEvent = new BinaryContentCreateFailEvent(binaryContentId,
+            bytes, cause);
+        System.out.println("cause.getMessage() = " + cause.getMessage());
+        eventPublisher.publishEvent(failedEvent);
+
+        return BinaryContentStatus.FAIL;
     }
 
     @Override

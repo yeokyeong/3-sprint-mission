@@ -1,16 +1,20 @@
 package com.sprint.mission.discodeit.Event;
 
+import com.sprint.mission.discodeit.dto.event.BinaryContentCreateFailEvent;
 import com.sprint.mission.discodeit.dto.event.MessageCreatedEvent;
 import com.sprint.mission.discodeit.dto.event.RoleUpdatedEvent;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.Notification;
 import com.sprint.mission.discodeit.entity.ReadStatus;
+import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.NotificationRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
+import com.sprint.mission.discodeit.repository.UserRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
@@ -26,6 +30,7 @@ public class NotificationRequiredEventListener {
     private final NotificationRepository notificationRepository;
     private final ReadStatusRepository readStatusRepository;
     private final MessageRepository messageRepository;
+    private final UserRepository userRepository;
 
     @Async
     @Transactional(propagation = Propagation.REQUIRES_NEW) // 트랜잭션 새로 열기
@@ -79,12 +84,12 @@ public class NotificationRequiredEventListener {
             System.out.println("noti = " + noti);
         }
 
-//        에러!!!!! DB에 저장이 안됨
         notificationRepository.saveAllAndFlush(notifications);
         log.info("[NotificationRequiredEventListener] MessageCreatedEvent 리스너 작업 완료");
 
     }
 
+    @Async
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT) // 기본값
     public void on(RoleUpdatedEvent event) {
@@ -107,5 +112,59 @@ public class NotificationRequiredEventListener {
         log.info("[NotificationRequiredEventListener] RoleUpdatedEvent 리스너 작업 완료");
 
     }
+
+    @Async
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT) // 기본값
+    public void on(BinaryContentCreateFailEvent event) {
+        log.info("[NotificationRequiredEventListener] BinaryContentCreateFailEvent 리스너 시작");
+        String requestId = MDC.get("request-id");
+        System.out.println("requestId = " + requestId);
+
+        String title = "S3 파일 업로드 실패";
+        String content = """
+               RequestId: %s
+                BinaryContentId: %s
+                Error: %s
+            """.formatted(
+            requestId,
+            event.binaryContentId(),
+            event.cause().getMessage()
+        );
+
+        /* # 알림 내용 예시
+        RequestId: 7641467e369e458a98033558a83321fb
+        BinaryContentId: b0549c2a-014c-4761-8b21-4b77d3bd011c
+        Error: The AWS Access Key Id you provided does not exist in our records.
+         (Service: S3,
+         Status Code: 403,
+         Request ID: B7KCVSRCGPYJZREX,
+         Extended Request ID: AWRVuJJJ3upwwOkCnd+yhHkgSajUxdg7L4195lbMVTIka6WnBpjZLLRTReoHbgIMf9zzH/QQM0Y5ZOVJCHF2F+l2mSyPG/+8Ee2XBS8hcqk=)
+         (SDK Attempt Count: 1)
+         */
+
+        // 모든 관리자 유저 정보 가져옴
+        List<Notification> notifications = userRepository.findAllByRole(Role.ADMIN).stream()
+            .map(user -> {
+                    log.info(
+                        "[NotificationRequiredEventListener] BinaryContentCreateFailEvent 리스너 - notification 생성 :{}",
+                        content);
+
+                    return Notification.builder()
+                        .receiverId(user.getId())
+                        .title(title)
+                        .content(content)
+                        .build();
+                }
+            ).toList();
+
+        System.out.println("notifications.size() = " + notifications.size());
+
+        notificationRepository.saveAllAndFlush(notifications);
+
+        log.info("[NotificationRequiredEventListener] BinaryContentCreateFailEvent 리스너 작업 완료");
+
+    }
+
 
 }
