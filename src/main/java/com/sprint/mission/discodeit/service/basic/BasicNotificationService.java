@@ -2,7 +2,6 @@ package com.sprint.mission.discodeit.service.basic;
 
 import com.sprint.mission.discodeit.dto.data.NotificationDto;
 import com.sprint.mission.discodeit.entity.Notification;
-import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.exception.User.UserAuthorizationException;
 import com.sprint.mission.discodeit.exception.User.UserNotFoundException;
@@ -15,10 +14,16 @@ import java.security.Principal;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -28,14 +33,13 @@ public class BasicNotificationService implements NotificationService {
     private final NotificationRepository notificationRepository;
     private final ReadStatusRepository readStatusRepository;
     private final NotificationMapper notificationMapper;
+    @Lazy
+    @Autowired
+    private BasicNotificationService self; // 프록시 주입
+
 
     @Override
     public List<NotificationDto> findAll(Principal principal) {
-
-        List<ReadStatus> readStatusTest = readStatusRepository.findAllByChannelIdAndNotificationEnabled(
-            UUID.fromString("d48c2b73-8a46-4afb-b1e1-b6c4608c5e0c"), true);
-
-        System.out.println("readStatusTest = " + readStatusTest.size());
 
         String userEmail = principal.getName();
         //FIXME : userService에 따로 빼기
@@ -46,13 +50,21 @@ public class BasicNotificationService implements NotificationService {
         User user = userRepository.findByEmail(userEmail)
             .orElseThrow(() -> new RuntimeException());
 
-        List<Notification> notifications = notificationRepository.findByReceiverId(user.getId());
+        return self.findAllByUserId(user.getId()); // 자기 자신 말고 새로운 객체 호출
+
+    }
+
+    @Cacheable(value = "notifications:byUserId", key = "#userId")
+    public List<NotificationDto> findAllByUserId(UUID userId) {
+        log.info("[notificationService] findAllByUserId calling...");
+        List<Notification> notifications = notificationRepository.findByReceiverId(userId);
 
         return notifications.stream().map(notificationMapper::toDto).toList();
     }
 
     @Transactional
     @Override
+    @CacheEvict(value = "notifications:byUserId", allEntries = true)
     public void deleteByNotificationId(UUID notificationId, Principal principal) {
         String userEmail = principal.getName();
         //FIXME : userService에 따로 빼기

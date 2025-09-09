@@ -18,6 +18,8 @@ import com.sprint.mission.discodeit.service.ChannelService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,6 +39,7 @@ public class BasicChannelService implements ChannelService {
     @Transactional
     @Override
     @PreAuthorize("hasRole('CHANNEL_MANAGER')")
+    @CacheEvict(cacheNames = "channels:byUserId", allEntries = true)
     public ChannelDto create(PublicChannelCreateRequest publicChannelCreateRequest) {
         Channel channel = new Channel(ChannelType.PUBLIC,
             publicChannelCreateRequest.name(), publicChannelCreateRequest.description(),
@@ -49,7 +52,7 @@ public class BasicChannelService implements ChannelService {
             .toList();
 
         System.out.println("readStatuses  = " + readStatuses.size());
-        
+
         this.readStatusRepository.saveAll(readStatuses);
 
         return channelMapper.toDto(channel);
@@ -57,6 +60,7 @@ public class BasicChannelService implements ChannelService {
 
     /* User 별 ReadStatus 생성 , name과 description 생략 */
     @Transactional
+    @CacheEvict(cacheNames = "channels:byUserId", allEntries = true)
     public ChannelDto create(PrivateChannelCreateRequest privateCreateRequest) {
         Channel channel = new Channel(ChannelType.PRIVATE, null, null,
             privateCreateRequest.ownerId());
@@ -89,6 +93,7 @@ public class BasicChannelService implements ChannelService {
                 () -> new ResourceNotFoundException("channelId = " + channelId));
     }
 
+    @Cacheable(value = "channels:byUserId", key = "#userId")
     @Override
     public List<ChannelDto> findAllByUserId(UUID userId) {
         // get private channel by userId
@@ -109,6 +114,7 @@ public class BasicChannelService implements ChannelService {
     @Transactional
     @Override
     @PreAuthorize("hasRole('CHANNEL_MANAGER')")
+    @CacheEvict(cacheNames = "channels:byUserId", allEntries = true)
     public ChannelDto update(UUID channelId, PublicChannelUpdateRequest updateRequest) {
         Channel channel = this.channelRepository.findById(channelId)
             .orElseThrow(

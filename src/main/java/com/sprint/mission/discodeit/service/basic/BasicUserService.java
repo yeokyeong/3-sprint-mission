@@ -27,6 +27,8 @@ import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -52,6 +54,7 @@ public class BasicUserService implements UserService {
 
     @Transactional
     @Override
+    @CacheEvict(value = "users:all", allEntries = true)
     public UserDto create(UserCreateRequest userCreateRequest,
         Optional<BinaryContentCreateRequest> optionalProfileCreateRequest) {
         // validation (name, email 검증)
@@ -99,6 +102,7 @@ public class BasicUserService implements UserService {
     }
 
     @Override
+    @Cacheable(value = "users:byId", key = "#userId")
     public UserDto find(UUID userId) {
         User user = this.userRepository
             .findById(userId)
@@ -116,6 +120,7 @@ public class BasicUserService implements UserService {
         return List.of();
     }
 
+    @Cacheable("users:all")
     @Override
     public List<UserDto> findAll() {
 

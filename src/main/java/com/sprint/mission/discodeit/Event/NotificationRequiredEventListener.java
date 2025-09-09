@@ -15,6 +15,8 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
@@ -35,6 +37,7 @@ public class NotificationRequiredEventListener {
     @Async
     @Transactional(propagation = Propagation.REQUIRES_NEW) // 트랜잭션 새로 열기
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT) // 기본값
+    @CacheEvict(value = "notifications:byUserId", allEntries = true)
     public void on(MessageCreatedEvent event) {
         log.info("[NotificationRequiredEventListener] MessageCreatedEvent 리스너 시작");
         /* 생성된 메세지 가져오기 */
@@ -92,6 +95,7 @@ public class NotificationRequiredEventListener {
     @Async
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT) // 기본값
+    @CachePut(value = "notifications:byUserId", key = "#event.userId()")
     public void on(RoleUpdatedEvent event) {
         log.info("[NotificationRequiredEventListener] RoleUpdatedEvent 리스너 시작");
 
@@ -116,6 +120,7 @@ public class NotificationRequiredEventListener {
     @Async
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT) // 기본값
+    @CacheEvict(value = "notifications:byUserId", allEntries = true)
     public void on(BinaryContentCreateFailEvent event) {
         log.info("[NotificationRequiredEventListener] BinaryContentCreateFailEvent 리스너 시작");
         String requestId = MDC.get("request-id");
