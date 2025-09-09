@@ -26,7 +26,6 @@ import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
-import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.http.SdkHttpMethod;
 import software.amazon.awssdk.regions.Region;
@@ -88,16 +87,14 @@ public class S3BinaryContentStorage implements BinaryContentStorage {
             PutObjectResponse response = this.getS3Client()
                 .putObject(putObjectRequest, RequestBody.fromBytes(bytes));
 
-            throw SdkClientException.create("테스트 실패");
-//            if (response.sdkHttpResponse().isSuccessful() &&
-//                response.eTag() != null) {
-//                log.info("S3 Object Upload Success");
-//                return BinaryContentStatus.SUCCESS;
-//            } else {
-//                log.error("fail to upload at S3 id: {}", binaryContentId);
-//             throw new S3Exception("업로드 실패", null);
-//                return BinaryContentStatus.FAIL;
-//            }
+            if (response.sdkHttpResponse().isSuccessful() &&
+                response.eTag() != null) {
+                log.info("S3 Object Upload Success");
+                return BinaryContentStatus.SUCCESS;
+            } else {
+                log.error("fail to upload at S3 id: {}", binaryContentId);
+                throw new RuntimeException("S3 Object Upload Fail");
+            }
 
         } catch (S3Exception e) {
             log.error("S3Exception while putting file: {}", binaryContentId, e);

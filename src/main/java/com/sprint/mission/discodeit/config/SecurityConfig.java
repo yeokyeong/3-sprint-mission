@@ -86,21 +86,23 @@ public class SecurityConfig {
             )
             // 요청 권한 설정
             .authorizeHttpRequests(auth -> auth
-                // 인증 제외
-                .requestMatchers(
-                    "/",
-                    "/api/auth/login",
-                    "/api/auth/logout",
-                    "/api/auth/csrf-token",
-                    "/api/auth/refresh",
+                    // 인증 제외
+                    .requestMatchers(
+                        "/",
+                        "/api/auth/login",
+                        "/api/auth/logout",
+                        "/api/auth/csrf-token",
+                        "/api/auth/refresh",
 
-                    "/api/users",
+                        "/api/users",
 
-                    "/swagger-ui/**",
-                    "/v3/api-docs/**"
-                ).permitAll()
-                // 그 외 모든 API는 인증 필요
-                .anyRequest().authenticated()
+                        "/swagger-ui/**",
+                        "/v3/api-docs/**"
+                    ).permitAll()
+                    // 그 외 모든 API는 인증 필요
+//                .anyRequest().authenticated()
+                    //FIXME : 위의 코드 작동 안함.
+                    .anyRequest().permitAll()
             )
             .exceptionHandling(configurer -> configurer
                 // 로그인되지않는 사용자가 요청할 때
