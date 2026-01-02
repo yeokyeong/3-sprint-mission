@@ -2,6 +2,8 @@ spring:
   application:
     name: discodeit
     version: ${PROJECT_VERSION}
+  thymeleaf:
+    check-template-location: false
   servlet:
     multipart:
       maxFileSize: 10MB # 파일 하나의 최대 크기
@@ -15,9 +17,32 @@ spring:
     password: ${DB_PASSWORD}
   # Cache 설정
   cache:
+    #    type: redis
+    #    cache-names:
+    #      - channels
+    #      - notifications
+    #      - users
+    #    redis:
+    #      enable-statistics: true
+    #  data:
+    #    redis:
+    #      host: ${REDIS_HOST:localhost}
+    #      port: ${REDIS_PORT:6379}
     type: caffeine
     caffeine:
       spec: maximumSize=1000,expireAfterWrite=10m,recordStats
+
+  # Kafka 설정
+  kafka:
+    bootstrap-servers: localhost:19092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    consumer:
+      group-id: discodeit-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
 
 discodeit:
   storage:
@@ -50,7 +75,8 @@ management:
   endpoints:
     web:
       exposure:
-        include: health, info, metrics, loggers, caches
+        include: "*"
+  #        include: health, info, metrics, loggers, caches
   info:
     env:
       enabled: true

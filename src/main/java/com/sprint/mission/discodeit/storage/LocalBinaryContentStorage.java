@@ -59,6 +59,8 @@ public class LocalBinaryContentStorage implements BinaryContentStorage {
     )
     @Override
     public BinaryContentStatus put(UUID binaryContentId, byte[] bytes) {
+        long start = System.currentTimeMillis();
+        log.info("메소드 시작: {}", start);
         // 객체를 저장할 파일 path 생성
         Path filePath = this.resolvePath(binaryContentId);
         if (Files.exists(filePath)) {
@@ -68,6 +70,8 @@ public class LocalBinaryContentStorage implements BinaryContentStorage {
         try (OutputStream outputStream = Files.newOutputStream(filePath)) {
             Thread.sleep(3000);
             outputStream.write(bytes);
+            long end = System.currentTimeMillis();
+            log.info("메소드 완료: {}, 총 수행시간(ms): {}", end, (end - start));
             return BinaryContentStatus.SUCCESS;
         } catch (IOException e) {
             log.error("I/O error while writing file: {}", binaryContentId, e);

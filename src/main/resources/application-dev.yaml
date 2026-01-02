@@ -15,7 +15,6 @@ spring:
     show-sql: false
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true     # 쿼리 로그 포맷 (정렬)
         highlight_sql: true  # 쿼리 로그 출력
   # SQL 스크립트 실행 여부 (script-based 기반 sql문)
