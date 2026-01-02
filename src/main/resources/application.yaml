@@ -1,6 +1,6 @@
 spring:
   application:
-    name: ${PROJECT_NAME}
+    name: discodeit
     version: ${PROJECT_VERSION}
   servlet:
     multipart:

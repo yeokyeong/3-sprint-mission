@@ -14,7 +14,7 @@ public class AsyncConfig {
 
     private final TaskDecorator taskDecorator;
 
-    @Bean(name = "myTaskExecutor")
+    @Bean
     public ThreadPoolTaskExecutor taskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
 
