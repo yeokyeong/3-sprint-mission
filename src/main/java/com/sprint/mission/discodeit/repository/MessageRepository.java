@@ -1,9 +1,6 @@
 package com.sprint.mission.discodeit.repository;
 
 import com.sprint.mission.discodeit.entity.Message;
-import java.time.Instant;
-import java.util.Optional;
-import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -11,6 +8,10 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+
+import java.time.Instant;
+import java.util.Optional;
+import java.util.UUID;
 
 public interface MessageRepository extends JpaRepository<Message, UUID> {
 
@@ -21,18 +22,26 @@ public interface MessageRepository extends JpaRepository<Message, UUID> {
     void deleteAllByChannelId(UUID channelId);
 
     @Query("SELECT m.createdAt "
-        + "FROM Message m "
-        + "WHERE m.channel.id = :channelId "
-        + "ORDER BY m.createdAt DESC LIMIT 1")
+            + "FROM Message m "
+            + "WHERE m.channel.id = :channelId "
+            + "ORDER BY m.createdAt DESC LIMIT 1")
     Optional<Instant> findLastMessageAtByChannelId(@Param("channelId") UUID channelId);
 
     @Query("SELECT m FROM Message m "
-        + "LEFT JOIN FETCH m.author a "
-        + "LEFT JOIN FETCH a.profile "
-        + "WHERE m.channel.id=:channelId AND m.createdAt < :createdAt")
+            + "LEFT JOIN FETCH m.author a "
+            + "LEFT JOIN FETCH a.profile "
+            + "WHERE m.channel.id=:channelId AND m.createdAt < :createdAt")
     Slice<Message> findAllByChannelIdWithAuthor(@Param("channelId") UUID channelId,
-        @Param("createdAt") Instant createdAt,
-        Pageable pageable);
+                                                @Param("createdAt") Instant createdAt,
+                                                Pageable pageable);
+
+    @Query("""
+            select m from Message m
+            join fetch m.author
+            join fetch m.channel
+            where m.id = :id
+            """)
+    Optional<Message> findByIdWithAuthorAndChannel(UUID id);
 
 //      /* CrudRepository의 기본 메소드 */
 //    public Message save(Message message);

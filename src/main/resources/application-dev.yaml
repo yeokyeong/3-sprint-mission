@@ -31,6 +31,8 @@ logging:
     org.hibernate.orm.jdbc.bind: trace     # SQL에 바인딩된 실제 값을 보기 위해 설정
     org.springframework.boot.autoconfigure.logging.ConditionEvaluationReportLoggingListener: off # @ConditionalOnClass did not find required class 로그 숨기기
     org.springframework.boot.autoconfigure: warn
+    org.springframework.cache: DEBUG
+    org.springframework.data.redis.cache: DEBUG
 # ─────────────────────────────────────────────
 #  # Admin 서버 설정 정보 추가
 #  boot:
